@@ -348,7 +348,7 @@ body.set-puff .hero{background:linear-gradient(120deg,#DB2777,#9333EA)}
 .coinbtn svg{width:auto;height:46px}
 @media (max-width:1000px){.map{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:900px){.slide{grid-template-columns:1fr}.slide .art{min-height:0}}
-@media (max-width:560px){.map,.alist,.extra{grid-template-columns:1fr}.ucard .pic{height:104px}.ubanner{min-height:160px}.ubanner h1{font-size:25px}.ubanner .mascot{width:80px;height:86px}.qchoices{grid-template-columns:1fr 1fr}.qcard h2{font-size:20px}.slide h2{font-size:23px}.slide p{font-size:17px}.diff{order:6;width:100%;justify-content:center}.dchip{flex:1}}
+@media (max-width:560px){.map,.alist,.extra{grid-template-columns:1fr}.ucard .pic{height:104px}.ubanner{min-height:160px}.ubanner h1{font-size:25px}.ubanner .mascot{width:80px;height:86px}.qchoices{grid-template-columns:1fr}.qcard h2{font-size:20px}.slide h2{font-size:23px}.slide p{font-size:17px}.diff{order:6;width:100%;justify-content:center}.dchip{flex:1}}
 .dtab{border-collapse:collapse;margin:0 auto;font-size:18px}
 .dtab th,.dtab td{border:2px solid #E0E7FF;padding:3px 12px;text-align:left}
 .dtab th{background:#EEF2FF;color:#3730A3}
@@ -530,7 +530,7 @@ a.xcard,a.acard{color:inherit;text-decoration:none}
 
 /* stacked fractions: tidy wrapping */
 .mixed{white-space:nowrap}.mixed>.fr{margin-left:2px}
-.qchoices .btn{min-width:0;white-space:normal;flex-wrap:wrap;row-gap:4px;line-height:1.1}
+.qchoices .btn{min-width:0;white-space:normal;flex-wrap:wrap;row-gap:4px;line-height:1.25;overflow-wrap:normal;word-break:normal;hyphens:none;font-size:22px;min-height:64px}
 @media (max-width:560px){.shead{flex-wrap:wrap}.shead>div:first-child{flex:1 1 100%}.sname{text-align:left}}
 
 /* ===== full-colour worksheets ===== */
@@ -835,7 +835,7 @@ function stackFracs(root){if(!root)return;if(root.nodeType===3){root.parentEleme
 let frQ=new Set(),frT=0;
 /* short answer options (one word / number / fraction) go in ONE row, wrapping only if they cannot fit */
 const optLen=b=>{const c=b.cloneNode(true);c.querySelectorAll('.fr').forEach(f=>{const p=[...f.children].map(i=>i.textContent.trim());f.replaceWith('x'.repeat(Math.max(...p.map(x=>x.length),1)))});return c.textContent.replace(/\s+/g,' ').trim().length};
-function markShort(){document.querySelectorAll('.controls,.qchoices,.trych').forEach(w=>{const bs=[...w.children].filter(e=>e.matches('.btn[data-v]'));const sh=bs.length>1&&bs.every(b=>!b.querySelector('svg,img')&&optLen(b)<=8);w.classList.toggle('shortrow',sh)})}
+function markShort(){document.querySelectorAll('.controls,.qchoices,.trych').forEach(w=>{const bs=[...w.children].filter(e=>e.matches('.btn[data-v]'));const sh=bs.length>1&&bs.every(b=>{if(b.querySelector('svg,img')||optLen(b)>8)return false;const c=b.cloneNode(true);c.querySelectorAll('.fr').forEach(f=>{const p=[...f.children].map(i=>i.textContent.trim());f.replaceWith('x'.repeat(Math.max(...p.map(x=>x.length),1)))});const s=c.textContent.replace(/\s+/g,' ').trim();if(/^[€£$]?[\d.,:\-/%]+$/.test(s))return true;const raw=s.replace(/\s+/g,'');if(/^\d+[×x÷+\-]\d+$/.test(raw))return true;if(b.querySelector('.fr')&&!/[A-Za-z]{3,}/.test(s))return true;return !/\s/.test(s)});w.classList.toggle('shortrow',sh)})}
 function frFlush(){frT=0;const q=[...frQ];frQ.clear();q.forEach(n=>{if(n.isConnected)stackFracs(n)});markShort()}
 const frObs=new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData')frQ.add(m.target.parentElement);else m.addedNodes.forEach(n=>frQ.add(n.nodeType===3?n.parentElement:n))}frFlush()});
 const frStart=()=>{frObs.observe(document.body,{childList:true,subtree:true,characterData:true});stackFracs(document.body)};
