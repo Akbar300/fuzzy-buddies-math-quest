@@ -510,7 +510,7 @@ a.xcard,a.acard{color:inherit;text-decoration:none}
 .skey ol.kfacts{columns:4}
 @media (max-width:640px){.sheet{padding:14px}.sitems{grid-template-columns:1fr}.sfacts{grid-template-columns:repeat(2,1fr)}}
 @media print{
- @page{size:letter;margin:12mm}
+ @page{size:letter;margin:.4in}
  html,body{height:auto!important;background:#fff!important}
  body>*:not(#printRoot){display:none!important}
  #printRoot{display:block!important}
@@ -582,7 +582,7 @@ a.xcard,a.acard{color:inherit;text-decoration:none}
 .shortrow>.btn[data-v]{flex:1 1 0;min-width:58px;max-width:200px;padding-left:6px;padding-right:6px;justify-content:center}
 .qchoices.shortrow>.btn[data-v]{max-width:none}
 
-/* printables: compact 2-column pages, 10 problems + key on its own page */
+/* printables: compact 2-column US Letter pages, filled with as many problems as fit + key on its own page */
 .sch.sch4{grid-template-columns:repeat(4,auto);justify-content:space-between}
 @media print{
  .sitems{grid-template-columns:1fr 1fr!important;gap:6px 10px!important}
@@ -598,6 +598,41 @@ a.xcard,a.acard{color:inherit;text-decoration:none}
 @media print{.sitem.big{display:grid!important;grid-template-columns:1fr 46%;gap:0 6px;align-items:center}.sitem.big .sbl{grid-column:1;grid-row:1}.sitem.big .sart{grid-column:2;grid-row:1}.sitem.big .sart svg{max-height:150px!important}}
 .controls.shortrow>:not(.btn[data-v]){flex-basis:100%}
 .controls.shortrow>.btn[data-v]{max-width:none}
+
+/* letter-page fitter (hidden) + shared compact typography */
+#printFit{position:absolute;left:0;top:0;width:0;height:0;overflow:hidden;visibility:hidden;pointer-events:none}
+#printFit .fitbox{width:7.7in;box-sizing:border-box}
+.sheet{box-sizing:border-box}
+#printFit .fitbox .sheet{width:100%;padding:8px 12px;border-width:5px}
+#printFit .fitbox .shead{padding:5px 10px;margin-bottom:6px}
+#printFit .fitbox .sbud svg{width:40px;height:44px}
+#printFit .fitbox .sunit{font-size:18px}
+#printFit .fitbox .sname{line-height:1.7;font-size:12px}
+#printFit .fitbox .sitems{grid-template-columns:1fr 1fr;gap:6px 10px}
+#printFit .fitbox .sitem{padding:5px 8px;font-size:13px;border-width:2px;border-radius:12px}
+#printFit .fitbox .sq{margin-bottom:2px}
+#printFit .fitbox .snum{min-width:22px;height:22px;font-size:12px}
+#printFit .fitbox .sart{margin:2px 0;padding:2px}
+#printFit .fitbox .sart svg{max-height:70px!important}
+#printFit .fitbox .sch{gap:0 8px}
+#printFit .fitbox .sbub{width:19px;height:19px;font-size:11px}
+#printFit .fitbox .sans{margin-top:4px}
+#printFit .fitbox .sfoot{margin-top:4px}
+#printFit .fitbox .sbuds svg{width:24px;height:26px}
+#printFit .fitbox .sitem.big{display:grid;grid-column:auto;grid-template-columns:1fr 46%;gap:0 6px;align-items:center}
+#printFit .fitbox .sitem.big .sbl{grid-column:1;grid-row:1}
+#printFit .fitbox .sitem.big .sart{grid-column:2;grid-row:1}
+#printFit .fitbox .sitem.big .sart svg{max-height:150px!important}
+#printFit .fitbox .sitem.big .sq{font-size:12.5px}
+#printFit .fitbox .sitem.big .sroom{margin-top:3px;font-size:12.5px}
+#printFit .fitbox .sitem.big .sans{margin-top:2px}
+#printFit .fitbox .sheet>.sitems{padding:2px}
+#printFit .fitbox .sitems,#printFit .fitbox .sfacts{break-inside:auto}
+@media print{
+  .sitems,.sfacts{break-inside:auto}
+  .sitem,.sfact{break-inside:avoid;page-break-inside:avoid}
+  .sitem.big{grid-column:auto!important}
+}
 
 </style>
 </head>
@@ -2845,12 +2880,17 @@ function runGym(){const G=gymSt(),cfg={tables:G.tables,op:G.op};leave();const ti
 /* ===================== Printables: paper worksheets + answer key ===================== */
 const PTYPES={factory:[['mix','Unit review'],['facts','× and ÷ facts'],['word','Word problems'],['tri','Fact family houses']]};
 const ptypes=id=>PTYPES[id]||[['mix','Unit review']];
-function printProblems(id,type){const out=[];const seen=new Set();let g=0;
- const add=q=>{const k=q.q+(q.art||'');if(seen.has(k)&&g<200)return;seen.add(k);out.push(q)};
- if(type==='facts'){const T=gymSt().tables.length?st.gym.tables:[2,3,4,5,6,7,8,9,10];while(out.length<48&&g++<400){const f=pickFact({tables:T,op:'mix'},[]);add({q:`${f.label} =`,num:1,ans:f.ans,fact:1})}return out}
- if(type==='word'){while(out.length<10&&g++<200){const P=WPT[pick(['groups','share','grouping','array','compare','twostep'])](3);add({q:P.t,num:1,ans:P.ans,why:`${P.eq} = ${P.ans}`,work:1})}return out}
- if(type==='tri'){while(out.length<6&&g++<200){const[a,b,p]=triFacts(3);const hide=pick(['top','bl','br']);const o={top:p,bl:a,br:b};o[hide]=null;add({q:'Find the missing number. Then write the 4 facts that live in rooms 1–4.',art:SV('0 0 600 470',triStr(Object.assign(o,{rooms:['Room 1 (×)','Room 2 (×)','Room 3 (÷)','Room 4 (÷)']}))),big:1,rooms:1,num:1,ans:hide==='top'?p:hide==='bl'?a:b,why:`${a} × ${b} = ${p}, ${b} × ${a} = ${p}, ${p} ÷ ${a} = ${b}, ${p} ÷ ${b} = ${a}`})}return out}
- const G=QUIZ[id];while(out.length<10&&g++<300)add(G[out.length%G.length]());/* room to spare (few pictures)? add 2 more */if(out.filter(q=>q.art).length<=2)while(out.length<12&&g++<400)add(G[out.length%G.length]());return out}
+function printProblems(id,type,want){const out=[];const seen=new Set();let g=0;
+ const add=q=>{const k=q.q+(q.art||'');if(seen.has(k)&&g<2000)return;seen.add(k);out.push(q)};
+ if(type==='facts'){const T=gymSt().tables.length?st.gym.tables:[2,3,4,5,6,7,8,9,10];want=want||80;while(out.length<want&&g++<2000){const f=pickFact({tables:T,op:'mix'},[]);add({q:`${f.label} =`,num:1,ans:f.ans,fact:1})}return out}
+ if(type==='word'){want=want||40;while(out.length<want&&g++<800){const P=WPT[pick(['groups','share','grouping','array','compare','twostep'])](3);add({q:P.t,num:1,ans:P.ans,why:`${P.eq} = ${P.ans}`,work:1})}return out}
+ if(type==='tri'){want=want||16;while(out.length<want&&g++<800){const[a,b,p]=triFacts(3);const hide=pick(['top','bl','br']);const o={top:p,bl:a,br:b};o[hide]=null;add({q:'Find the missing number. Then write the 4 facts that live in rooms 1–4.',art:SV('0 0 600 470',triStr(Object.assign(o,{rooms:['Room 1 (×)','Room 2 (×)','Room 3 (÷)','Room 4 (÷)']}))),big:1,rooms:1,num:1,ans:hide==='top'?p:hide==='bl'?a:b,why:`${a} × ${b} = ${p}, ${b} × ${a} = ${p}, ${p} ÷ ${a} = ${b}, ${p} ÷ ${b} = ${a}`})}return out}
+ const G=QUIZ[id];want=want||40;while(out.length<want&&g++<1200)add(G[out.length%G.length]());return out}
+function letterBudget(){return 9.85*96}
+function measurePrintSheets(html){let host=$('#printFit');if(!host){host=h('div',{id:'printFit'});document.body.append(host)}host.innerHTML='<div class="fitbox">'+html+'</div>';const sheets=host.querySelectorAll('.sheet');return{w:sheets[0]?sheets[0].scrollHeight:0,k:sheets[1]?sheets[1].scrollHeight:0}}
+function fitProblems(id,type){const cap=type==='facts'?96:type==='tri'?20:48;const pool=printProblems(id,type,cap);const budget=letterBudget();const ok=n=>{const h=measurePrintSheets(sheetHTML(id,type,pool.slice(0,n)));return h.w<=budget&&h.k<=budget};let minN=type==='facts'?20:type==='tri'?3:8;minN=Math.min(minN,pool.length);let best=1;
+ if(!ok(minN)){let n=minN;while(n>1&&!ok(n))n--;best=Math.max(1,n)}else{let lo=minN,hi=pool.length;best=minN;while(lo<=hi){const mid=(lo+hi)>>1;if(ok(mid)){best=mid;lo=mid+1}else hi=mid-1}}
+ const host=$('#printFit');if(host)host.innerHTML='';return pool.slice(0,best)}
 function sheetHTML(id,type,probs){const u=UNITS.find(x=>x.id===id);const tn=ptypes(id).find(t=>t[0]===type)[1];const stripTags=s=>String(s).replace(/<svg[\s\S]*?<\/svg>/g,'').replace(/<(?!\/?(span|i|b)\b)[^>]+>/g,'');
  const S=curSet(),g=guideOf(u),pal=S.members.filter(m=>m!==g).slice(0,3);
  const head=`<div class="shead" style="--c:${u.c}"><div class="sbanner" style="background-image:url(${IMG[u.img]})"></div><div class="sbud">${buddySVG(g,'')}</div><div class="stitle"><div class="sbrand">Fuzzy Buddies Math Quest</div><div class="sunit">${u.name}</div><div class="stype">${tn}</div></div><div class="sname">Name ____________________<br>Date ______________</div></div>`;
@@ -2860,12 +2900,12 @@ function sheetHTML(id,type,probs){const u=UNITS.find(x=>x.id===id);const tn=ptyp
  const key=probs.map((q,i)=>`<li><b>${q.ch?L[q.ch.map(String).indexOf(String(q.ans))]+'. ':''}${q.render?stripTags(q.render(String(q.ans))):stripTags(q.ans)}</b>${q.why&&!q.fact?` <span>${stripTags(q.why)}</span>`:''}</li>`).join('');
  return `<section class="sheet" style="--c:${u.c}">${head}<div class="${probs[0]&&probs[0].fact?'sfacts':'sitems'}">${items}</div>${foot}</section><section class="sheet skey" style="--c:${u.c}">${head.replace('Name ____________________<br>Date ______________','<b class="sstamp">ANSWER KEY</b><br><small>for grown-ups</small>')}<ol class="${probs[0]&&probs[0].fact?'kfacts':''}">${key}</ol>${foot}</section>`}
 function showPrint(id,type){const u=UNITS.find(x=>x.id===id);type=type||'mix';leave();document.documentElement.style.setProperty('--c',u.c);
- const probs=printProblems(id,type);const html=sheetHTML(id,type,probs);let pr=$('#printRoot');if(!pr){pr=h('div',{id:'printRoot'});document.body.append(pr)}pr.innerHTML=html;
+ const probs=fitProblems(id,type);const html=sheetHTML(id,type,probs);let pr=$('#printRoot');if(!pr){pr=h('div',{id:'printRoot'});document.body.append(pr)}pr.innerHTML=html;
  main.append(h('div',{class:'printwrap',style:`--c:${u.c}`},h('div',{class:'ptools'},h('button',{class:'back',id:'pBack',onclick:()=>{pr.innerHTML='';id==='factory'&&type==='facts'?showFacts():showUnit(id)}},'◀ '+u.short),h('b',{},'Print a worksheet'),
    h('div',{class:'seg'},ptypes(id).map(([k,l])=>h('button',{class:'segb'+(k===type?' on':''),'data-ptype':k,onclick:()=>showPrint(id,k)},l))),
    h('button',{class:'btn',id:'pNew',onclick:()=>showPrint(id,type)},'↻ New problems'),h('button',{class:'btn go',id:'pPrint',onclick:()=>window.print()},'🖨 Print')),
-  h('p',{class:'small pnote'},'Page 1 is the worksheet. Page 2 is the answer key (for grown-ups). Prints in full color (turn on "Background graphics" if your printer dialog asks).'),h('div',{class:'sheets',html})))}
-window.__mq.showFacts=showFacts;window.__mq.runGym=runGym;window.__mq.showPrint=showPrint;window.__mq.factMastered=factMastered;window.__mq.printProblems=printProblems;
+  h('p',{class:'small pnote'},'Page 1 is the worksheet, filled for US Letter (8.5×11 in). Page 2 is the answer key (for grown-ups). Print double-sided in full color (turn on "Background graphics" if your printer asks).'),h('div',{class:'sheets',html})))}
+window.__mq.showFacts=showFacts;window.__mq.runGym=runGym;window.__mq.showPrint=showPrint;window.__mq.factMastered=factMastered;window.__mq.printProblems=printProblems;window.__mq.fitProblems=fitProblems;
 
 })();
 </script>
