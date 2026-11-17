@@ -807,6 +807,10 @@ a.xcard,a.acard{color:inherit;text-decoration:none}
 }
 
 /* iPhone/iPad: no double-tap zoom, no auto text resize */ html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+
+/* fraction line-up rank badges */
+.btn .rk{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;border-radius:50%;background:#0fb39c;color:#fff;font-size:15px;font-weight:800;margin-right:6px}
+.btn.on{outline:3px solid #0fb39c;outline-offset:1px}
 </style>
 </head>
 <body>
@@ -1755,7 +1759,74 @@ defAct('f_build',{name:'Split the Tray',icon:'split',blurb:'Break a fraction int
   const bTarget=d>=4?den:need||1;A.audit({kind:'split',n,den,need,W});
   A.plan(()=>[...Array(bTarget).keys()].map(i=>({click:`#stage [data-i="${n-1-i}"]`})).concat([{click:'#checkBtn'}]));A.wrong(()=>[{click:'#checkBtn'}])}});
 
-UNITS.push({id:'bakery',name:'Fraction Bakery',short:'Bakery',c:'#DB2777',img:'bakery',when:'Nov – Dec',fcps:'Unit 5 · Fractions Part 1',sol:['3.NS.3'],blurb:'Name, shade and build fractions with yummy treats.',acts:['f_shade','f_name','f_mixed','f_build']});
+/* ===== Bakery Challenge Zone — Grade 4 stretch (VA 2023: 4.CE.3, 4.NS.3) ===== */
+const KIDC=['#F472B6','#60A5FA','#FBBF24','#34D399','#FB923C','#A78BFA'];
+const KIDN=['Sunny','Drizzle','Scout','Pip','Lovey','Blaze'];
+const frVal=s=>{s=String(s);let m=s.match(/^(\d+) (\d+)\/(\d+)$/);if(m)return +m[1]+m[2]/m[3];m=s.match(/^(\d+)\/(\d+)$/);return m?m[1]/m[2]:+s};
+const frStr=(n,den,mixed)=>mixed&&n>=den?(n%den?`${Math.floor(n/den)} ${n%den}/${den}`:String(n/den)):FT(n,den);
+/* answer + distractors, all different in value, all positive */
+const frPick=(ans,cands)=>{const out=[ans];const seen=new Set([frVal(ans).toFixed(4)]);for(const c of shuffle(cands)){if(out.length>=4)break;const v=frVal(c);if(!(v>0)||/\/0$/.test(c)||seen.has(v.toFixed(4)))continue;seen.add(v.toFixed(4));out.push(c)}return shuffle(out)};
+function muffinStr(cx,cy,r,K){let s=`<path d="M${cx-r*.78} ${cy+r*.45}L${cx-r*.55} ${cy+r*1.18}H${cx+r*.55}L${cx+r*.78} ${cy+r*.45}Z" fill="#FDBA74" stroke="#9A3412" stroke-width="2.5"/>`;s+=`<circle cx="${cx}" cy="${cy}" r="${r+3}" fill="#FDE68A" stroke="#92400E" stroke-width="3"/>`;for(let j=0;j<K;j++){const a0=-Math.PI/2+j*2*Math.PI/K,a1=a0+2*Math.PI/K;s+=K===1?`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${KIDC[0]}" stroke="#92400E" stroke-width="2.5"/>`:`<path d="${wedge(cx,cy,r,a0,a1)}" fill="${KIDC[j]}" stroke="#92400E" stroke-width="2.5" stroke-linejoin="round"/>`}return s}
+function xMark(x,y,w,h){const p=Math.min(w,h)*.22;return `<path d="M${x+p} ${y+p}L${x+w-p} ${y+h-p}M${x+w-p} ${y+p}L${x+p} ${y+h-p}" stroke="#1E1B4B" stroke-width="4" stroke-linecap="round"/>`}
+
+/* --- Fraction Café: add & subtract, like denominators --- */
+defAct('f_add',{name:'Fraction Café',icon:'fcafe',blurb:'Challenge: add and take away fractions with the same bottom number.',sol:'4.CE.3 ★',challenge:1,
+ round(A,d){const den=d<=2?pick([3,4,5,6]):pick([4,5,6,8,10,12]);const sub=d>=3&&Math.random()<.45;const mixed=d>=4;let a,b,res;
+  if(sub){a=d>=4?rnd(den+1,2*den-1):rnd(3,den);b=rnd(1,a-1);res=a-b}else if(d>=4){a=rnd(Math.ceil(den/2),den-1);b=rnd(den-a+1,den-1);res=a+b}else{a=rnd(1,den-2);b=rnd(1,den-1-a);res=a+b}
+  const top=sub?a:a+b;const W=Math.max(1,Math.ceil(top/den));const VW=W===1?560:820;const svg=A.svg(`0 0 ${VW} 240`);const bw=(VW-40-(W-1)*24)/W,pw=bw/den;let s='';
+  for(let k=0;k<W;k++){const x0=20+k*(bw+24);s+=barStr(x0,70,bw,110,den,i=>sub?(i<res?1:0):(i<a?1:i<a+b?2:0),{base:k*den,empty:sub?'#FFF7ED':FCOL.empty});if(sub)for(let i=k*den;i<(k+1)*den;i++)if(i>=res&&i<a)s+=xMark(x0+(i-k*den)*pw,70,pw,110);
+   s+=`<text x="${x0+bw/2}" y="218" text-anchor="middle" font-size="${W>1?30:24}" font-weight="700" fill="#9D174D">1 whole</text>`}
+  s+=`<text x="50" y="50" text-anchor="middle" font-size="28" font-weight="700" fill="#DB2777">${a}/${den}</text><text x="100" y="44" text-anchor="middle" font-size="32" font-weight="700" fill="#1E1B4B">${sub?'−':'+'}</text><text x="150" y="50" text-anchor="middle" font-size="28" font-weight="700" fill="${sub?'#1E1B4B':'#2563EB'}">${b}/${den}</text>`;
+  svg.innerHTML=s;
+  const who=pick(KIDN);A.ask(sub?`${F(a,den)} − ${F(b,den)} = ?`:`${F(a,den)} + ${F(b,den)} = ?`,sub?`${who} had ${F(a,den)} of the cake bars and gave away ${F(b,den)} (the crossed-out pieces). How much is left?`:`${who} ate ${F(a,den)} of the cake bars (pink), then ${F(b,den)} more (blue). How much in all?`+(mixed?' Give a mixed number.':''));
+  const ans=frStr(res,den,mixed);const trap=sub?frStr(a+b,den,mixed):FT(a+b,2*den);
+  const ch=frPick(ans,[trap,frStr(res+1,den,mixed),frStr(Math.max(1,res-1),den,mixed),sub?FT(res,2*den):frStr(res+den,den,mixed),frStr(res+2,den,mixed)]);
+  A.choices(ch,ans,{render:renderFT,msg:()=>`${res} pieces of ${F(1,den)} = ${renderFT(ans)}. The pieces stay the same size, so the bottom number stays ${den}.`,
+   hint:v=>/\/(\d+)$/.test(v)&&+v.split('/').pop()!==den?`Careful! The pieces don't change size, so the bottom number stays ${den}. Only count the pieces.`:sub?`Count the pink pieces that are NOT crossed out.`:`Count all the pink and blue pieces together.`});
+  A.audit({kind:'addsub',a,b,res,den,sub,ans});A.plan(()=>[{choose:ans}]);A.wrong(()=>[{choose:ch.find(c=>c!==ans)}])}});
+
+/* --- Muffin Share: a fraction is a division --- */
+defAct('f_share',{name:'Muffin Share',icon:'fshare',blurb:'Challenge: share muffins fairly. A fraction means divide!',sol:'4.NS.3g ★',challenge:1,
+ round(A,d){let K,M;if(d<=2){K=pick([2,3,4]);M=rnd(1,K-1)}else if(d===3){K=pick([3,4,5,6]);M=rnd(1,K-1)}else{K=pick([2,3,4]);const opts=[];for(let m=K+1;m<=8;m++)if(m%K)opts.push(m);M=pick(opts)}
+  const cols=Math.min(M,4),rows=Math.ceil(M/4),cell=170,VW=Math.max(560,cols*cell+40),gy=rows*cell+20;const svg=A.svg(`0 0 ${VW} ${gy+70}`);let s='';
+  for(let i=0;i<M;i++){const c=i%4,r=Math.floor(i/4);const inRow=Math.min(4,M-r*4);const x0=(VW-inRow*cell)/2;s+=muffinStr(x0+c*cell+cell/2,r*cell+75,58,K)}
+  const lw=VW/K;for(let j=0;j<K;j++){const x=j*lw+lw/2;s+=`<circle cx="${x-34}" cy="${gy+30}" r="13" fill="${KIDC[j]}" stroke="#1E1B4B" stroke-width="2"/><text x="${x-14}" y="${gy+38}" font-size="22" font-weight="700" fill="#1E1B4B">${KIDN[j]}</text>`}
+  svg.innerHTML=s;const mixed=d>=5;
+  A.ask(`${M} muffin${M>1?'s':''} shared fairly by ${K} friends. How much muffin does each friend get?`,`Each muffin is cut into ${K} equal pieces, one for each friend. Count ${KIDN[0]}'s pink pieces.`+(mixed?' Give a mixed number.':''));
+  const ans=frStr(M,K,mixed);const ch=frPick(ans,[FT(K,M),FT(1,K),FT(1,M),frStr(M+1,K,mixed),frStr(Math.max(1,M-1),K,mixed),FT(M,K*M)]);
+  A.choices(ch,ans,{render:renderFT,msg:()=>`${M} ÷ ${K} = ${renderFT(ans)}. Each friend gets ${M} piece${M>1?'s':''} of ${F(1,K)}.`,hint:v=>v===FT(K,M)?`Flipped! The top number is how many pieces ONE friend gets. The bottom number is how many friends.`:`Each piece is ${F(1,K)} of a muffin. How many pink pieces does ${KIDN[0]} get?`});
+  A.audit({kind:'share',M,K,ans});A.plan(()=>[{choose:ans}]);A.wrong(()=>[{choose:ch.find(c=>c!==ans)}])}});
+
+/* --- Fraction Line-Up: order 3–4 fractions --- */
+defAct('f_order',{name:'Fraction Line-Up',icon:'fline',blurb:'Challenge: put fractions in order from least to greatest.',sol:'4.NS.3a–c ★',challenge:1,
+ round(A,d){let list=[],kind;const uniq=a=>new Set(a.map(f=>frVal(f).toFixed(4))).size===a.length;
+  for(let t=0;t<50;t++){const n=d<=3?3:4;kind=d<=2?'den':d===3?'num':d===4?pick(['den','num']):pick(['den','num','mix']);
+   if(kind==='den'){const den=pick(d>=4?[3,4,5,6,8]:[4,5,6,8,10]);const pool=[...Array(d>=4?2*den-1:den-1).keys()].map(i=>i+1);list=shuffle(pool).slice(0,n).map(x=>FT(x,den))}
+   else if(kind==='num'){const num=pick(d>=4?[1,2,3]:[1,2]);const pool=[2,3,4,5,6,8,10,12].filter(x=>x>num||d>=4);list=shuffle(pool).slice(0,n).map(x=>FT(num,x))}
+   else{const pool=['1/8','1/4','1/3','1/2','2/3','3/4','5/6','7/8','5/4','3/2','1/6','2/5','4/5','7/4'];list=shuffle(pool).slice(0,n)}
+   if(uniq(list))break}
+  const down=d>=4&&Math.random()<.4;const order=list.slice().sort((x,y)=>down?frVal(y)-frVal(x):frVal(x)-frVal(y));
+  const mx=Math.max(...list.map(frVal)),Wn=Math.max(1,Math.ceil(mx-1e-9));const VW=640,L=110,R=VW-20,Lw=(R-L)/Wn,rowH=62;const svg=A.svg(`0 0 ${VW} ${list.length*rowH+30}`);let s='';
+  list.forEach((f,k)=>{const [n,den]=f.split('/').map(Number);const y=14+k*rowH;s+=`<text x="${L-24}" y="${y+34}" text-anchor="middle" font-size="26" font-weight="700" fill="#1E1B4B">${f}</text>`;const segs=Math.max(1,Math.ceil(n/den));for(let w=0;w<segs;w++)s+=barStr(L+w*Lw,y,Lw,44,den,i=>i<n,{base:w*den,col:KIDC[k%KIDC.length],stroke:'#475569'})});
+  for(let w=1;w<=Wn;w++)s+=`<line x1="${L+w*Lw}" y1="4" x2="${L+w*Lw}" y2="${list.length*rowH+18}" stroke="#DC2626" stroke-width="2" stroke-dasharray="6 5"/>`;
+  svg.innerHTML=s;
+  A.ask(down?'Tap the fractions from <b>greatest</b> to <b>least</b>':'Tap the fractions from <b>least</b> to <b>greatest</b>',kind==='den'?'Same bottom number: the pieces are the same size, so compare the tops.':kind==='num'?'Same top number: the bigger the bottom number, the smaller each piece.':'Use the bars. Which is closest to 0? Which is past the red 1-whole line?');
+  let picked=[];const btns=[];const paint=()=>btns.forEach(b=>{const i=picked.indexOf(b.dataset.v);b.querySelector('.rk')?.remove();b.classList.toggle('on',i>=0);if(i>=0)b.prepend(h('span',{class:'rk'},String(i+1)))});
+  list.forEach(f=>{const b=h('button',{class:'btn','data-v':f,html:renderFT(f)});b.onclick=()=>{if(A.solved)return;sfx.tap();const i=picked.indexOf(f);if(i>=0)picked=picked.slice(0,i);else picked.push(f);paint();
+   if(picked.length===list.length){if(picked.every((v,j)=>v===order[j]))A.good(order.map(renderFT).join(down?' &gt; ':' &lt; '));else{A.bad(kind==='num'?'Remember: same top, bigger bottom = smaller pieces. Try again!':'Not quite. Look at how much of each bar is colored, then try again!');setTimeout(()=>{picked=[];paint()},700)}}};btns.push(b);A.controls.append(b)});
+  A.audit({kind:'order',list,order,down});A.plan(()=>order.map(v=>({choose:v})));A.wrong(()=>order.slice().reverse().map(v=>({choose:v})))}});
+
+/* --- Snack Hops: whole number × unit fraction on a number line --- */
+defAct('f_times',{name:'Snack Hops',icon:'fhops',blurb:'Challenge: 5 × one-fourth means 5 hops of one-fourth!',sol:'4.CE.3c ★',challenge:1,
+ round(A,d){let den,n;if(d<=2){den=pick([3,4,5,6]);n=rnd(2,den)}else{den=pick([2,3,4,5,6,8]);n=rnd(2,Math.min(12,2*den-1))}if(n===den&&d>=3)n++;
+  const mixed=d>=5;const W=Math.max(1,Math.ceil(n/den));const VW=W===1?640:820,x0=40,w=VW-80,Y=170;const svg=A.svg(`0 0 ${VW} 250`);let s=numLineStr(x0,Y,w,den,W,null);const step=w/(den*W);
+  for(let i=0;i<n;i++){const xa=x0+i*step,xb=xa+step,hh=Math.min(70,step*.9);s+=`<path d="M${xa} ${Y-6}Q${(xa+xb)/2} ${Y-6-hh*1.6} ${xb} ${Y-6}" fill="none" stroke="${KIDC[i%KIDC.length]}" stroke-width="5" stroke-linecap="round"/>`;if(i===0)s+=`<text x="${(xa+xb)/2}" y="${Y-hh-30}" text-anchor="middle" font-size="22" font-weight="700" fill="#9D174D">1/${den}</text>`}
+  svg.innerHTML=s;const snack=pick(['sandwich','pizza','waffle','pancake']);
+  A.ask(`${n} × ${F(1,den)} = ?`,`${n} buddies each eat ${F(1,den)} of a ${snack}. Count the hops: each hop is ${F(1,den)}.`+(mixed&&n>den?' Give a mixed number.':''));
+  const ans=frStr(n,den,mixed);const ch=frPick(ans,[FT(1,n*den),frStr(n+1,den,mixed),frStr(n-1,den,mixed),FT(1,den),FT(n,n*den),FT(den,n)]);
+  A.choices(ch,ans,{render:renderFT,msg:()=>`${n} hops of ${F(1,den)} land on ${renderFT(ans)}.`,hint:v=>v===FT(1,n*den)?`Careful! Each hop is still ${F(1,den)}. Count the hops to find the top number.`:`Count the colored hops from 0. Each one is ${F(1,den)}.`});
+  A.audit({kind:'times',n,den,ans});A.plan(()=>[{choose:ans}]);A.wrong(()=>[{choose:ch.find(c=>c!==ans)}])}});
+UNITS.push({id:'bakery',name:'Fraction Bakery',short:'Bakery',c:'#DB2777',img:'bakery',when:'Nov – Dec',fcps:'Unit 5 · Fractions Part 1',sol:['3.NS.3'],blurb:'Name, shade and build fractions with yummy treats.',acts:['f_shade','f_name','f_mixed','f_build','f_add','f_share','f_order','f_times']});
 LEARN.bakery=[
  {t:'A fraction is part of a whole',p:['When we cut a pie into <b>equal</b> pieces, each piece is a fraction of the pie.','The <b>bottom number</b> (denominator) tells how many equal pieces make the whole. The <b>top number</b> (numerator) tells how many pieces we are talking about.'],tip:'3 out of 4 equal pieces = '+F(3,4),art:()=>`<svg viewBox="0 0 520 300">${pieStr(160,150,120,4,i=>i<3)}<g font-size="26" font-weight="700" fill="#1E1B4B"><text x="330" y="110">3 ← pieces frosted</text><line x1="330" y1="130" x2="380" y2="130" stroke="#1E1B4B" stroke-width="4"/><text x="330" y="170">4 ← equal pieces</text></g></svg>`},
  {t:'Equal parts only!',p:['Fractions only work when every piece is the <b>same size</b>.','The top bar is cut into fourths. The bottom bar has 4 pieces, but they are NOT equal, so they are not fourths.'],tip:'Always check: are the pieces equal?',art:()=>`<svg viewBox="0 0 560 300">${barStr(30,30,500,90,4,i=>i<1)}<text x="545" y="88" font-size="40" fill="#16A34A" text-anchor="end">✓</text><g stroke="#9D174D" stroke-width="2.5"><rect x="30" y="170" width="60" height="90" fill="#F472B6"/><rect x="90" y="170" width="220" height="90" fill="#FFF7ED"/><rect x="310" y="170" width="120" height="90" fill="#FFF7ED"/><rect x="430" y="170" width="100" height="90" fill="#FFF7ED"/></g><text x="545" y="228" font-size="40" fill="#E11D48" text-anchor="end">✗</text></svg>`},
@@ -2597,6 +2668,15 @@ const LV=(t,words)=>({kind:'vocab',t,words});
    {wrong:'Calling unequal pieces "fourths".',right:'Fourths must be 4 EQUAL pieces.'},
    {wrong:'3 shaded, 1 not shaded → '+F(3,1)+'.',right:'Denominator counts ALL pieces: '+F(3,4)+'.',art:SV('0 0 120 90',pieStr(60,45,38,4,i=>i<3))},
    {wrong:F(1,8)+' is bigger than '+F(1,4)+' because 8 > 4.',right:'More pieces means SMALLER pieces. '+F(1,4)+' is bigger.',art:SV('0 0 120 90',barStr(10,10,100,28,4,i=>i<1)+barStr(10,52,100,28,8,i=>i<1))}]}])}
+LEARN.bakery.push(
+ tag({t:'Adding fractions ★',p:['When the pieces are the <b>same size</b>, just count them!','2/6 + 3/6 is 2 pieces + 3 pieces = 5 pieces of one-sixth = <b>5/6</b>.','The bottom number does <b>not</b> change, because the pieces stay the same size.'],tip:'Add the tops. Keep the bottom.',art:()=>SV('0 0 560 260',barStr(30,70,500,110,6,i=>i<2?1:i<5?2:0)+TX(110,50,'2/6',28,'#DB2777')+TX(320,50,'+ 3/6',28,'#2563EB')+TX(280,232,'= 5/6',32))},['f_add']),
+ tag({t:'Taking away fractions ★',p:['Start with 5/8. Take away 2/8.','5 pieces − 2 pieces = 3 pieces, so 5/8 − 2/8 = <b>3/8</b>.'],tip:'Cross out the pieces you take away, then count what is left.',art:()=>SV('0 0 560 240',barStr(30,60,500,110,8,i=>i<3)+[3,4].map(i=>xMark(30+i*62.5,60,62.5,110)).join('')+TX(280,220,'5/8 − 2/8 = 3/8',30))},['f_add']),
+ tag({t:'Sharing is dividing ★',p:['3 muffins shared fairly by 4 friends? Cut every muffin into 4 pieces.','Each friend gets 1 piece from each muffin: 3 pieces of one-fourth = <b>3/4</b>.','So 3 ÷ 4 = 3/4. Top: what we share. Bottom: how many friends.'],tip:'Count one friend\'s pieces. That is the top number.',art:()=>SV('0 0 600 280',[0,1,2].map(i=>muffinStr(110+i*190,110,70,4)).join('')+TX(300,262,'3 ÷ 4 = 3/4 each',30))},['f_share']),
+ tag({t:'Lining up fractions ★',p:['<b>Same bottom</b>: the pieces are the same size, so the bigger top is bigger. 5/8 > 3/8.','<b>Same top</b>: the bigger the bottom, the smaller each piece. 2/3 > 2/5.'],tip:'Check the bars: more colored = bigger fraction.',art:()=>SV('0 0 600 260',TX(60,58,'2/3',26)+barStr(110,22,460,48,3,i=>i<2,{col:KIDC[0],stroke:'#475569'})+TX(60,138,'2/5',26)+barStr(110,102,460,48,5,i=>i<2,{col:KIDC[1],stroke:'#475569'})+TX(300,222,'2/3 > 2/5',32))},['f_order']),
+ tag({t:'Hops of a unit fraction ★',p:['5 × 1/4 means <b>5 hops of 1/4</b>.','Count the hops: 1/4, 2/4, 3/4, 4/4, 5/4. We land on <b>5/4</b>, which is 1 1/4.'],tip:'Each hop keeps its size. Count the hops for the top number.',art:()=>{let s=numLineStr(40,170,520,4,2,5);const st=520/8;for(let i=0;i<5;i++){const a=40+i*st;s+=`<path d="M${a} 164Q${a+st/2} 70 ${a+st} 164" fill="none" stroke="${KIDC[i]}" stroke-width="5" stroke-linecap="round"/>`}return SV('0 0 600 250',s+TX(300,40,'5 × 1/4 = 5/4',28))}},['f_times']),
+ {kind:'try',t:'Try it ★',q:'3/8 + 4/8 = ?',ch:['7/8','7/16','1/8','12/8'],ans:'7/8',why:'3 pieces + 4 pieces = 7 pieces of one-eighth. The bottom stays 8.',hint:'Add the tops only. The pieces stay the same size.',acts:['f_add']},
+ {kind:'try',t:'Try it ★',q:'2 pizzas shared fairly by 3 friends. How much does each friend get?',ch:['2/3','3/2','1/3','1/2'],ans:'2/3',why:'Cut each pizza into 3 pieces. Each friend gets 2 pieces of one-third: 2/3. So 2 ÷ 3 = 2/3.',hint:'Top: what is shared. Bottom: how many friends.',acts:['f_share']}
+);
 
 /* 3 Factory */
 {const O=LEARN.factory;tag(O[0],['m_word'],'groups');tag(O[1],['m_array']);tag(O[2],['m_share']);tag(O[4],['m_strat'],'strat');
@@ -2912,6 +2992,12 @@ Object.assign(ACTICON,{
  g_moves:I('<path d="M10 40L22 20L34 40Z" fill="#93C5FD" stroke="#1E3A8A" stroke-width="2.5" stroke-linejoin="round"/><path d="M30 40L42 20L54 40Z" fill="none" stroke="#1E3A8A" stroke-width="2.5" stroke-dasharray="4 3" stroke-linejoin="round"/><path d="M18 50H46M40 45l6 5-6 5" fill="none" stroke="#DB2777" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>','#EFF6FF'),
  g_blue:I('<path d="M10 14H40V30H54V52H10Z" fill="#BFDBFE" stroke="#1E3A8A" stroke-width="3" stroke-linejoin="round"/><path d="M10 30H40" stroke="#1E3A8A" stroke-width="2" stroke-dasharray="4 3"/><text x="25" y="25" text-anchor="middle" font-size="9" font-weight="700" fill="#1E3A8A">A</text><text x="32" y="45" text-anchor="middle" font-size="9" font-weight="700" fill="#1E3A8A">B</text>','#EFF6FF')});
 {const ORD={shapes:1,bakery:2,factory:3,mountain:4,garden:5,park:6,party:7,clock:8,store:9,island:10,detective:11};const WH={bakery:'Dec – Jan',mountain:'Jan – Feb',garden:'Feb – Mar',party:'Mar – Apr'};UNITS.forEach(u=>{u.order=ORD[u.id]||99;if(WH[u.id])u.when=WH[u.id];delete u.review});UNITS.sort((a,b)=>a.order-b.order)}
+Object.assign(ACTICON,{
+ fcafe:I('<rect x="8" y="12" width="22" height="14" rx="2" fill="#F472B6" stroke="#9D174D" stroke-width="3"/><rect x="34" y="12" width="22" height="14" rx="2" fill="#60A5FA" stroke="#1D4ED8" stroke-width="3"/><rect x="8" y="38" width="48" height="14" rx="2" fill="#FFF7ED" stroke="#9D174D" stroke-width="3"/><path d="M9.5 39.5h20v11h-20z" fill="#F472B6"/><path d="M29.5 39.5h16v11h-16z" fill="#60A5FA"/>','#FDF2F8'),
+ fshare:I('<circle cx="32" cy="30" r="20" fill="#FDE68A" stroke="#92400E" stroke-width="3"/><path d="M32 30V10A20 20 0 0 1 49.3 40Z" fill="#F472B6" stroke="#92400E" stroke-width="2.5"/><path d="M32 30L49.3 40A20 20 0 0 1 14.7 40Z" fill="#60A5FA" stroke="#92400E" stroke-width="2.5"/><path d="M32 30L14.7 40A20 20 0 0 1 32 10Z" fill="#FBBF24" stroke="#92400E" stroke-width="2.5"/>','#FFFBEB'),
+ fline:I('<rect x="8" y="10" width="16" height="10" fill="#F472B6" stroke="#475569" stroke-width="2.5"/><rect x="8" y="27" width="30" height="10" fill="#60A5FA" stroke="#475569" stroke-width="2.5"/><rect x="8" y="44" width="46" height="10" fill="#34D399" stroke="#475569" stroke-width="2.5"/>','#F0FDF4'),
+ fhops:I('<path d="M6 46H58" stroke="#1E1B4B" stroke-width="3.5" stroke-linecap="round"/><path d="M8 44Q16 26 24 44M24 44Q32 26 40 44M40 44Q48 26 56 44" fill="none" stroke="#DB2777" stroke-width="3.5" stroke-linecap="round"/>','#FDF2F8')
+});
 const iconFor=k=>ACTICON[k]||I(`<text x="32" y="42" text-anchor="middle" font-size="28" font-weight="700" fill="#5B21B6">?</text>`);
 const starStr=n=>'★'.repeat(n)+'☆'.repeat(3-n);
 
