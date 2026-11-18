@@ -3033,6 +3033,17 @@ Object.assign(ACTICON,{
  g_moves:I('<path d="M10 40L22 20L34 40Z" fill="#93C5FD" stroke="#1E3A8A" stroke-width="2.5" stroke-linejoin="round"/><path d="M30 40L42 20L54 40Z" fill="none" stroke="#1E3A8A" stroke-width="2.5" stroke-dasharray="4 3" stroke-linejoin="round"/><path d="M18 50H46M40 45l6 5-6 5" fill="none" stroke="#DB2777" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>','#EFF6FF'),
  g_blue:I('<path d="M10 14H40V30H54V52H10Z" fill="#BFDBFE" stroke="#1E3A8A" stroke-width="3" stroke-linejoin="round"/><path d="M10 30H40" stroke="#1E3A8A" stroke-width="2" stroke-dasharray="4 3"/><text x="25" y="25" text-anchor="middle" font-size="9" font-weight="700" fill="#1E3A8A">A</text><text x="32" y="45" text-anchor="middle" font-size="9" font-weight="700" fill="#1E3A8A">B</text>','#EFF6FF')});
 {const ORD={shapes:1,bakery:2,factory:3,mountain:4,garden:5,park:6,party:7,clock:8,store:9,island:10,detective:11};const WH={bakery:'Dec – Jan',mountain:'Jan – Feb',garden:'Feb – Mar',party:'Mar – Apr'};UNITS.forEach(u=>{u.order=ORD[u.id]||99;if(WH[u.id])u.when=WH[u.id];delete u.review});UNITS.sort((a,b)=>a.order-b.order)}
+/* One fractions unit: Fraction Bakery now holds Fraction Face-Off too (FCPS Units 5 + 10).
+   Order: Grade 3 basics, then compare / benchmarks / equivalent, then the ★ stretch topics. Ids stay the same, so saved stars carry over. */
+{const B=UNITS.find(u=>u.id==='bakery'),P=UNITS.find(u=>u.id==='party');if(B&&P){
+ const star=a=>['f_add','f_share','f_order','f_times'].includes(a);
+ B.acts=B.acts.filter(a=>!star(a)).concat(P.acts.filter(a=>!B.acts.includes(a)),B.acts.filter(star));
+ B.fcps='Units 5 & 10 · Fractions';B.when='Dec – Jan · Apr';B.sol=['3.NS.3','Gr 4 ★'];
+ B.blurb='Name, shade and build fractions, then compare them, use ½ as a benchmark and find equivalent fractions. ★ topics stretch into Grade 4.';
+ const LB=LEARN.bakery||[],LP=LEARN.party||[];const k=LB.findIndex(c=>/★/.test(c.t||''));const cut=k<0?LB.length:k;
+ LEARN.bakery=LB.slice(0,cut).concat(LP,LB.slice(cut));
+ QUIZ.bakery=(QUIZ.bakery||[]).concat(QUIZ.party||[]);
+ UNITS.splice(UNITS.indexOf(P),1);UNITS.forEach((u,i)=>u.order=i+1)}}
 Object.assign(ACTICON,{
  fcafe:I('<rect x="8" y="12" width="22" height="14" rx="2" fill="#F472B6" stroke="#9D174D" stroke-width="3"/><rect x="34" y="12" width="22" height="14" rx="2" fill="#60A5FA" stroke="#1D4ED8" stroke-width="3"/><rect x="8" y="38" width="48" height="14" rx="2" fill="#FFF7ED" stroke="#9D174D" stroke-width="3"/><path d="M9.5 39.5h20v11h-20z" fill="#F472B6"/><path d="M29.5 39.5h16v11h-16z" fill="#60A5FA"/>','#FDF2F8'),
  fshare:I('<circle cx="32" cy="30" r="20" fill="#FDE68A" stroke="#92400E" stroke-width="3"/><path d="M32 30V10A20 20 0 0 1 49.3 40Z" fill="#F472B6" stroke="#92400E" stroke-width="2.5"/><path d="M32 30L49.3 40A20 20 0 0 1 14.7 40Z" fill="#60A5FA" stroke="#92400E" stroke-width="2.5"/><path d="M32 30L14.7 40A20 20 0 0 1 32 10Z" fill="#FBBF24" stroke="#92400E" stroke-width="2.5"/>','#FFFBEB'),
