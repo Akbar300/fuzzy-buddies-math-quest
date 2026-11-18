@@ -830,6 +830,14 @@ a.xcard,a.acard{color:inherit;text-decoration:none}
 #printFit .fitbox .sheet.pg .sfact,#printRoot .sheet.pg .sfact{display:flex;align-items:center;gap:4px;min-width:0}
 #printFit .fitbox .sheet.pg .sfact u,#printRoot .sheet.pg .sfact u{flex:1 1 auto;width:auto!important;min-width:34px;align-self:flex-end;margin-bottom:4px}
 #printFit .fitbox .sheet.pg .sitem:not(.big) .sart svg,#printRoot .sheet.pg .sitem:not(.big) .sart svg{max-height:100px!important}
+.scols{display:flex;gap:8px;align-items:stretch;flex:1 1 auto;min-height:0}
+.scol{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:6px}
+.scol>.sitem{margin:0!important;box-sizing:border-box;break-inside:avoid;page-break-inside:avoid}
+.scol>.sitem:not(.big){display:block}
+#printRoot .scol>.sitem,#pvBox .scol>.sitem{flex:1 1 auto}
+.kcols{display:flex;gap:16px;align-items:flex-start;flex:1 1 auto}
+.kcol{flex:1 1 0;min-width:0;margin:0;padding-left:30px!important;font-size:var(--kfs,14px)!important;columns:auto!important}
+.kcol li{margin:0 0 5px;break-inside:avoid}
 #printFit .fitbox{width:8in!important}
 #printFit .fitbox .sheet.pg{height:auto!important}
 @media print{
@@ -852,6 +860,61 @@ a.xcard,a.acard{color:inherit;text-decoration:none}
 /* fraction line-up rank badges */
 .btn .rk{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;border-radius:50%;background:#0fb39c;color:#fff;font-size:15px;font-weight:800;margin-right:6px}
 .btn.on{outline:3px solid #0fb39c;outline-offset:1px}
+
+/* ===== on-screen preview = the real printed pages, scaled to fit the screen ===== */
+#pvBox .sheet{width:100%;padding:8px 12px;border-width:5px}
+#pvBox .shead{padding:5px 10px;margin-bottom:6px}
+#pvBox .sbud svg{width:40px;height:44px}
+#pvBox .sunit{font-size:18px}
+#pvBox .sname{line-height:1.7;font-size:12px}
+#pvBox .sitems{grid-template-columns:1fr 1fr;gap:6px 10px}
+#pvBox .sitem{padding:5px 8px;font-size:13px;border-width:2px;border-radius:12px}
+#pvBox .sq{margin-bottom:2px}
+#pvBox .snum{min-width:22px;height:22px;font-size:12px}
+#pvBox .sart{margin:2px 0;padding:2px}
+#pvBox .sart svg{max-height:70px!important}
+#pvBox .sch{gap:0 8px}
+#pvBox .sbub{width:19px;height:19px;font-size:11px}
+#pvBox .sans{margin-top:4px}
+#pvBox .sfoot{margin-top:4px}
+#pvBox .sbuds svg{width:24px;height:26px}
+#pvBox .sitem.big{display:grid;grid-column:auto;grid-template-columns:1fr 46%;gap:0 6px;align-items:center}
+#pvBox .sitem.big .sbl{grid-column:1;grid-row:1}
+#pvBox .sitem.big .sart{grid-column:2;grid-row:1}
+#pvBox .sitem.big .sart svg{max-height:150px!important}
+#pvBox .sitem.big .sq{font-size:12.5px}
+#pvBox .sitem.big .sroom{margin-top:3px;font-size:12.5px}
+#pvBox .sitem.big .sans{margin-top:2px}
+#pvBox .sheet>.sitems{padding:2px}
+#pvBox .sitems,#pvBox .sfacts{break-inside:auto}
+so short problems never sit in tall empty boxes. */
+#pvBox .sheet.pg>.sitems{display:block!important;column-count:var(--cols,2);column-gap:10px;column-fill:balance}
+#pvBox .sheet.pg>.sitems>.sitem{break-inside:avoid;page-break-inside:avoid;-webkit-column-break-inside:avoid;margin:0 0 6px;width:100%;box-sizing:border-box}
+#pvBox .sheet.pg>.sitems>.sitem:not(.big){display:block}
+#pvBox .sheet.pg .sitem.big{grid-template-columns:minmax(0,1fr) minmax(0,40%)!important}
+#pvBox .sheet.pg .sitem.big .sart{min-width:0;overflow:hidden}
+#pvBox .sheet.pg .sitem.big .sart svg{width:100%!important;height:auto!important;max-height:none!important}
+#pvBox .sheet.pg>.sitems>.sitem{padding-bottom:calc(5px + var(--grow,0px))!important}
+#pvBox .sheet.pg>.sfacts{grid-template-columns:repeat(var(--cols,4),minmax(0,1fr))!important;row-gap:calc(10px + var(--grow,0px))!important;font-size:20px}
+#pvBox .sheet.pg .sitem.big{grid-template-rows:auto auto}
+#pvBox .sheet.pg .sitem.big .srooms{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}
+#pvBox .sheet.pg.skey ol{font-size:var(--kfs,14px)!important}
+#pvBox .sheet.pg{padding:6px 8px!important;border-width:4px!important}
+#pvBox .sheet.pg.skey ol{padding-left:30px!important;margin:0}
+#pvBox .sheet.pg .sch{display:flex!important;flex-wrap:wrap;gap:2px 14px;justify-content:flex-start}
+#pvBox .sheet.pg .sch>span{white-space:nowrap}
+#pvBox .sheet.pg .sch.sch4{justify-content:space-between}
+#pvBox .sheet.pg .sitem.big{grid-template-columns:minmax(0,1fr) minmax(0,36%)!important}
+#pvBox .sheet.pg .sroom{white-space:nowrap;font-size:13px!important;margin-top:5px!important}
+#pvBox .sheet.pg .sfact{display:flex;align-items:center;gap:4px;min-width:0}
+#pvBox .sheet.pg .sfact u{flex:1 1 auto;width:auto!important;min-width:34px;align-self:flex-end;margin-bottom:4px}
+#pvBox .sheet.pg .sitem:not(.big) .sart svg{max-height:100px!important}
+#pvBox{display:flex;flex-direction:column;gap:14px;width:100%}
+#pvBox .pvslot{position:relative;width:100%;overflow:hidden;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.15);background:#fff}
+#pvBox .sheet.pg{position:absolute;left:0;top:0;width:8in!important;height:10.45in!important;max-height:10.45in!important;overflow:hidden!important;transform-origin:0 0;box-shadow:none;margin:0!important}
+#pvBox .sheet.pg>.sitems{flex:1 1 auto}
+#printFit .fitbox .shead,#pvBox .shead,#printRoot .shead{grid-template-columns:auto 1fr auto!important}
+#printFit .fitbox .sname,#pvBox .sname,#printRoot .sname{grid-column:auto!important}
 </style>
 </head>
 <body>
@@ -3246,10 +3309,22 @@ function measureOne(html){let host=$('#printFit');if(!host){host=h('div',{id:'pr
  const r=sh.getBoundingClientRect().right-6;for(const e of sh.querySelectorAll('.sitem,.sfact,.sroom,.sch,.sans,.sart svg'))if(e.getBoundingClientRect().right>r||e.scrollWidth>e.clientWidth+2)return 1e9;return sh.scrollHeight}
 function measurePrintSheets(html){let host=$('#printFit');if(!host){host=h('div',{id:'printFit'});document.body.append(host)}host.innerHTML='<div class="fitbox">'+html+'</div>';const sheets=host.querySelectorAll('.sheet');return{w:sheets[0]?sheets[0].scrollHeight:0,k:sheets[sheets.length-1]?sheets[sheets.length-1].scrollHeight:0}}
 function colChoices(type){return type==='facts'?[4,5]:type==='tri'?[2]:[2,3]}
-function fitPage(id,type,pool,start,side){const budget=letterBudget();const left=pool.length-start;if(left<=0)return{n:0};let best={n:0};
- for(const cols of colChoices(type)){const ok=n=>measureOne(pageHTML(id,type,pool.slice(start,start+n),start,side,{cols,grow:0}))<=budget;let b=1;if(ok(1)){let lo=1,hi=left;while(lo<=hi){const mid=(lo+hi)>>1;if(ok(mid)){b=mid;lo=mid+1}else hi=mid-1}}if(b>best.n)best={n:b,cols}}
- /* hand the leftover height to the problems as extra work room, so nothing is blank at the bottom */
- const L={cols:best.cols,grow:0};const sl=pool.slice(start,start+best.n);let lo=0,hi=240;while(hi-lo>1){const mid=(lo+hi)>>1;if(measureOne(pageHTML(id,type,sl,start,side,{cols:best.cols,grow:mid}))<=budget)lo=mid;else hi=mid}L.grow=lo;best.lay=L;return best}
+/* Columns are built by the app (real column boxes), not CSS multi-column: iPhone Safari ignores multi-column when printing. */
+function packCols(hs,cols,avail,gap){const H=Array(cols).fill(0),cnt=Array(cols).fill(0),as=[];for(let i=0;i<hs.length;i++){let c=0;for(let k=1;k<cols;k++)if(H[k]<H[c])c=k;const add=(cnt[c]?gap:0)+hs[i];if(H[c]+add>avail)break;H[c]+=add;cnt[c]++;as.push(c)}return as}
+function fitPage(id,type,pool,start,side){const budget=letterBudget();const rest=pool.slice(start);if(!rest.length)return{n:0};
+ if(type==='facts'){let best={n:0};for(const cols of colChoices(type)){const ok=n=>measureOne(pageHTML(id,type,rest.slice(0,n),start,side,{cols,grow:0}))<=budget;let b=1;if(ok(1)){let lo=1,hi=rest.length;while(lo<=hi){const mid=(lo+hi)>>1;if(ok(mid)){b=mid;lo=mid+1}else hi=mid-1}}if(b>best.n)best={n:b,cols}}
+  const sl=rest.slice(0,best.n);let lo=0,hi=240;while(hi-lo>1){const mid=(lo+hi)>>1;if(measureOne(pageHTML(id,type,sl,start,side,{cols:best.cols,grow:mid}))<=budget)lo=mid;else hi=mid}return{n:best.n,lay:{cols:best.cols,grow:lo}}}
+ let best={n:0};
+ for(const cols of colChoices(type)){
+  const base=measureOne(pageHTML(id,type,[],start,side,{cols,assign:[]}));if(base>=1e9)continue;
+  /* measure every problem at this column width (all stacked in column 1) */
+  const host=$('#printFit');host.innerHTML='<div class="fitbox">'+pageHTML(id,type,rest,start,side,{cols,assign:rest.map(()=>0)})+'</div>';
+  const col=host.querySelector('.scol');const items=[...col.children];const r=host.querySelector('.sheet').getBoundingClientRect().right-6;
+  if(items.some(e=>e.scrollWidth>e.clientWidth+2||[...e.querySelectorAll('.sch,.sans,.sroom,.sart svg')].some(x=>x.getBoundingClientRect().right>r)))continue;
+  const hs=items.map(e=>e.getBoundingClientRect().height);
+  const assign=packCols(hs,cols,budget-base-4,6);
+  if(assign.length>best.n)best={n:assign.length,lay:{cols,assign}}}
+ if(!best.n)best={n:1,lay:{cols:2,assign:[0]}};return best}
 function fitProblems(id,type){const cap=type==='facts'?200:type==='tri'?24:80;const pool=printProblems(id,type,cap);const F=fitPage(id,type,pool,0,'front');const B=fitPage(id,type,pool,F.n,'back');const host=$('#printFit');if(host)host.innerHTML='';const probs=pool.slice(0,F.n+B.n);probs.split=F.n;probs.lay=[F.lay,B.lay];return probs}
 function sheetParts(id,type){const u=UNITS.find(x=>x.id===id);const tn=ptypes(id).find(t=>t[0]===type)[1];const S=curSet(),g=guideOf(u),pal=S.members.filter(m=>m!==g).slice(0,3);return{u,tn,g,pal}}
 function headHTML(id,type,mode){const{u,tn,g}=sheetParts(id,type);
@@ -3257,13 +3332,16 @@ function headHTML(id,type,mode){const{u,tn,g}=sheetParts(id,type);
  return `<div class="shead${mode==='back'?' slim':''}" style="--c:${u.c}"><div class="sbanner" style="background-image:url(${IMG[u.img]})"></div><div class="sbud">${buddySVG(g,'')}</div><div class="stitle"><div class="sbrand">Fuzzy Buddies Math Quest</div><div class="sunit">${u.name}</div><div class="stype">${tn}${mode==='back'?' · part 2':''}</div></div><div class="sname">${right}</div></div>`}
 function footHTML(id,type,txt){const{u,pal}=sheetParts(id,type);return `<div class="sfoot"><span class="sbuds">${pal.map(m=>buddySVG(m,'')).join('')}</span><span>${txt||("You've got this! · Fuzzy Buddies Math Quest · "+u.fcps)}</span></div>`}
 function itemsHTML(probs,offset){const L='ABCD';return probs.map((q,ii)=>{const i=ii+offset;return q.big?`<div class="sitem big"><div class="sbl"><div class="sq"><b class="snum">${i+1}</b> ${q.q}</div><div class="sans">Missing number: ______</div>${[1,2,3,4].map(n=>`<div class="sroom">Room ${n}: ____ ${n<3?'×':'÷'} ____ = ____</div>`).join('')}</div><div class="sart">${q.art}</div></div>`:q.fact?`<div class="sfact"><span class="snum">${i+1}</span> ${q.q} <u></u></div>`:`<div class="sitem${q.art?' wide':''}"><div class="sq"><b class="snum">${i+1}</b> ${q.q}</div>${q.art?`<div class="sart">${q.art}</div>`:''}${q.ch?`<div class="sch${q.ch.every(c=>{const r=q.render?q.render(String(c)):String(c);return !/<svg|<img/.test(r)&&r.replace(/<span class="fr"><i>(\d+)<\/i><i>(\d+)<\/i><\/span>/g,(m,a,b)=>'x'.repeat(Math.max(a.length,b.length))).replace(/\d+\/\d+/g,'xx').replace(/<[^>]+>/g,'').length<=6})?' sch4':''}">${q.ch.map((c,k)=>`<span><i class="sbub">${L[k]}</i> ${q.render?q.render(String(c)):c}</span>`).join('')}</div>`:''}${q.num||q.work?`<div class="sans">${q.work?'Number sentence: ______________________ &nbsp; ':''}Answer: ____________</div>`:''}${q.lines?'<div class="slines"></div>'.repeat(q.lines):''}${q.rooms?[1,2,3,4].map(n=>`<div class="sroom">Room ${n}: ______ ${n<3?'×':'÷'} ______ = ______</div>`).join(''):''}</div>`}).join('')}
-function pageHTML(id,type,probs,offset,side,lay){const{u}=sheetParts(id,type);const facts=probs[0]&&probs[0].fact;lay=lay||{cols:facts?4:2,grow:0};
- return `<section class="sheet pg ${side}" style="--c:${u.c};--cols:${lay.cols};--grow:${lay.grow/Math.max(1,Math.ceil(probs.length/lay.cols))}px">${headHTML(id,type,side)}<div class="${facts?'sfacts':'sitems'}">${itemsHTML(probs,offset)}</div>${footHTML(id,type,side==='front'?'Turn the page over for more ➜':null)}</section>`}
-function keyHTML(id,type,probs,compact,fs){const{u}=sheetParts(id,type);const L='ABCD';const stripTags=s=>String(s).replace(/<svg[\s\S]*?<\/svg>/g,'').replace(/<(?!\/?(span|i|b)\b)[^>]+>/g,'');const facts=probs[0]&&probs[0].fact;
- const key=probs.map((q,i)=>`<li><b>${q.ch?L[q.ch.map(String).indexOf(String(q.ans))]+'. ':''}${q.render?stripTags(q.render(String(q.ans))):stripTags(q.ans)}</b>${q.why&&!q.fact&&!compact?` <span>${stripTags(q.why)}</span>`:''}</li>`).join('');
- return `<section class="sheet pg skey" style="--c:${u.c};--kfs:${fs||14}px">${headHTML(id,type,'key')}<ol class="${facts?'kfacts':compact?'kcompact':''}">${key}</ol>${footHTML(id,type)}</section>`}
+function pageHTML(id,type,probs,offset,side,lay){const{u}=sheetParts(id,type);const facts=(probs[0]&&probs[0].fact)||type==='facts';lay=lay||{cols:facts?4:2,grow:0};
+ let body;if(facts)body=`<div class="sfacts">${itemsHTML(probs,offset)}</div>`;else{const cols=lay.cols||2,as=lay.assign||probs.map((_,i)=>i%cols);const html=probs.map((q,i)=>itemsHTML([q],offset+i));const cs=Array.from({length:cols},()=>[]);html.forEach((h,i)=>cs[as[i]||0].push(h));body=`<div class="scols">${cs.map(c=>`<div class="scol">${c.join('')}</div>`).join('')}</div>`}
+ return `<section class="sheet pg ${side}" style="--c:${u.c};--cols:${lay.cols};--grow:${facts?(lay.grow||0)/Math.max(1,Math.ceil(probs.length/lay.cols)):0}px">${headHTML(id,type,side)}${body}${footHTML(id,type,side==='front'?'Turn the page over for more ➜':null)}</section>`}
+function keyLis(probs,compact){const L='ABCD';const stripTags=s=>String(s).replace(/<svg[\s\S]*?<\/svg>/g,'').replace(/<(?!\/?(span|i|b)\b)[^>]+>/g,'');return probs.map((q,i)=>`<li value="${i+1}"><b>${q.ch?L[q.ch.map(String).indexOf(String(q.ans))]+'. ':''}${q.render?stripTags(q.render(String(q.ans))):stripTags(q.ans)}</b>${q.why&&!q.fact&&!compact?` <span>${stripTags(q.why)}</span>`:''}</li>`)}
+function keyHTML(id,type,probs,compact,fs,split){const{u}=sheetParts(id,type);const lis=keyLis(probs,compact);const cols=probs[0]&&probs[0].fact?4:compact?3:2;
+ const cuts=split||Array.from({length:cols-1},(_,k)=>Math.ceil(lis.length*(k+1)/cols));const parts=[];let a=0;cuts.concat([lis.length]).forEach(b=>{parts.push(lis.slice(a,b));a=b});
+ return `<section class="sheet pg skey" style="--c:${u.c};--kfs:${fs||14}px">${headHTML(id,type,'key')}<div class="kcols">${parts.map(p=>`<ol class="kcol">${p.join('')}</ol>`).join('')}</div>${footHTML(id,type)}</section>`}
+function keyBalanced(id,type,probs,compact,fs){const cols=probs[0]&&probs[0].fact?4:compact?3:2;const host=$('#printFit');host.innerHTML='<div class="fitbox">'+keyHTML(id,type,probs,compact,fs,Array(cols-1).fill(probs.length))+'</div>';const hs=[...host.querySelectorAll('.kcol li')].map(e=>e.getBoundingClientRect().height);const tot=hs.reduce((x,y)=>x+y,0);const cuts=[];let acc=0,k=1;hs.forEach((h,i)=>{acc+=h;if(k<cols&&acc>=tot*k/cols){cuts.push(i+1);k++}});while(cuts.length<cols-1)cuts.push(probs.length);const html=keyHTML(id,type,probs,compact,fs,cuts);return{html,h:measureOne(html)}}
 function sheetHTML(id,type,probs){const nF=probs.split!=null?probs.split:probs.length;const lay=probs.lay||[];const front=pageHTML(id,type,probs.slice(0,nF),0,'front',lay[0]);const back=nF<probs.length?pageHTML(id,type,probs.slice(nF),nF,'back',lay[1]):'';
- const B=letterBudget();let compact=measureOne(keyHTML(id,type,probs,false,11))>B;let fs=11;for(let f=20;f>=11;f--){if(measureOne(keyHTML(id,type,probs,compact,f))<=B-12){fs=f;break}}let key=keyHTML(id,type,probs,compact,fs);const host=$('#printFit');if(host)host.innerHTML='';return front+back+key}
+ const B=letterBudget();let compact=keyBalanced(id,type,probs,false,11).h>B-12;let key=keyBalanced(id,type,probs,compact,10).html;for(let f=20;f>=10;f--){const t=keyBalanced(id,type,probs,compact,f);if(t.h<=B-12){key=t.html;break}}const host=$('#printFit');if(host)host.innerHTML='';return front+back+key}
 function showPrint(id,type){const u=UNITS.find(x=>x.id===id);type=type||'mix';leave();document.documentElement.style.setProperty('--c',u.c);
  let pr=$('#printRoot');if(!pr){pr=h('div',{id:'printRoot'});document.body.append(pr)}pr.innerHTML='';
  const box=h('div',{class:'sheets'},h('p',{class:'small'},'Making your pages…'));
@@ -3272,7 +3350,8 @@ function showPrint(id,type){const u=UNITS.find(x=>x.id===id);type=type||'mix';le
    h('button',{class:'btn',id:'pNew',onclick:()=>showPrint(id,type)},'↻ New problems'),h('button',{class:'btn go',id:'pPrint',onclick:()=>window.print()},'🖨 Print')),
   h('p',{class:'small pnote'},'Page 1 (front) and page 2 (back) are the worksheet, filled for US Letter. Page 3 is the answer key for grown-ups: print pages 1–2 double-sided, then page 3 on its own. Turn on "Background graphics" if your printer asks.'),box));
  /* Measure only after the worksheet font has loaded, so the page fill matches what prints. */
- const build=()=>{const probs=fitProblems(id,type);const html=sheetHTML(id,type,probs);pr.innerHTML=html;box.innerHTML=html};
+ const fitPv=()=>{const W=box.clientWidth;if(!W)return;const k=W/(8*96);box.querySelectorAll('.pvslot').forEach(sl=>{sl.style.height=(10.45*96*k)+'px';const sh=sl.firstElementChild;if(sh)sh.style.transform='scale('+k+')'})};
+ const build=()=>{const probs=fitProblems(id,type);const html=sheetHTML(id,type,probs);pr.innerHTML=html;box.id='pvBox';box.innerHTML='';const tmp=document.createElement('div');tmp.innerHTML=html;[...tmp.children].forEach(sh=>{const sl=document.createElement('div');sl.className='pvslot';sl.appendChild(sh);box.appendChild(sl)});fitPv();if(!window.__pvR){window.__pvR=1;window.addEventListener('resize',()=>{const b=document.getElementById('pvBox');if(b){const k=b.clientWidth/(8*96);b.querySelectorAll('.pvslot').forEach(sl=>{sl.style.height=(10.45*96*k)+'px';sl.firstElementChild&&(sl.firstElementChild.style.transform='scale('+k+')')})}})}};
  const fr=document.fonts&&document.fonts.ready;if(fr){Promise.race([fr,new Promise(r=>setTimeout(r,2500))]).then(build)}else build()}
 window.__mq.showFacts=showFacts;window.__mq.runGym=runGym;window.__mq.showPrint=showPrint;window.__mq.factMastered=factMastered;window.__mq.printProblems=printProblems;window.__mq.fitProblems=fitProblems;
 
