@@ -797,6 +797,47 @@ a.xcard,a.acard{color:inherit;text-decoration:none}
 }
 
 
+
+/* ===== fixed-size printable pages (front, back, key) ===== */
+.sheet.pg{display:flex;flex-direction:column}
+.sheet.pg>.sfoot{margin-top:auto}
+.shead.slim{padding-top:3px!important;padding-bottom:3px!important}
+.shead.slim .sbud svg{width:30px!important;height:32px!important}
+.shead.slim .sunit{font-size:16px!important}
+.sside{font-size:15px}
+.skey ol.kcompact{columns:3}
+/* Problems flow down two columns (no rigid rows), so short problems never sit in tall empty boxes. */
+#printFit .fitbox .sheet.pg>.sitems,#printRoot .sheet.pg>.sitems{display:block!important;column-count:var(--cols,2);column-gap:10px;column-fill:balance}
+#printFit .fitbox .sheet.pg>.sitems>.sitem,#printRoot .sheet.pg>.sitems>.sitem{break-inside:avoid;page-break-inside:avoid;-webkit-column-break-inside:avoid;margin:0 0 6px;width:100%;box-sizing:border-box}
+#printFit .fitbox .sheet.pg>.sitems>.sitem:not(.big),#printRoot .sheet.pg>.sitems>.sitem:not(.big){display:block}
+#printFit .fitbox .sheet.pg .sitem.big,#printRoot .sheet.pg .sitem.big{grid-template-columns:minmax(0,1fr) minmax(0,40%)!important}
+#printFit .fitbox .sheet.pg .sitem.big .sart,#printRoot .sheet.pg .sitem.big .sart{min-width:0;overflow:hidden}
+#printFit .fitbox .sheet.pg .sitem.big .sart svg,#printRoot .sheet.pg .sitem.big .sart svg{width:100%!important;height:auto!important;max-height:none!important}
+#printFit .fitbox .sheet.pg>.sitems>.sitem,#printRoot .sheet.pg>.sitems>.sitem{padding-bottom:calc(5px + var(--grow,0px))!important}
+#printFit .fitbox .sheet.pg>.sfacts,#printRoot .sheet.pg>.sfacts{grid-template-columns:repeat(var(--cols,4),minmax(0,1fr))!important;row-gap:calc(10px + var(--grow,0px))!important;font-size:20px}
+#printFit .fitbox .sheet.pg .sitem.big,#printRoot .sheet.pg .sitem.big{grid-template-rows:auto auto}
+#printFit .fitbox .sheet.pg .sitem.big .srooms,#printRoot .sheet.pg .sitem.big .srooms{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:1fr 1fr;gap:2px 10px}
+.srooms .sroom{white-space:nowrap;font-size:13px!important;margin-top:4px!important}
+#printFit .fitbox .sheet.pg.skey ol,#printRoot .sheet.pg.skey ol{font-size:var(--kfs,14px)!important}
+#printFit .fitbox .sheet.pg,#printRoot .sheet.pg{padding:6px 8px!important;border-width:4px!important}
+.sheet.pg>.shead,.sheet.pg>.sfoot{flex-shrink:0}
+#printFit .fitbox .sheet.pg.skey ol,#printRoot .sheet.pg.skey ol{padding-left:30px!important;margin:0}
+#printFit .fitbox .sheet.pg .sch,#printRoot .sheet.pg .sch{display:flex!important;flex-wrap:wrap;gap:2px 14px;justify-content:flex-start}
+#printFit .fitbox .sheet.pg .sch>span,#printRoot .sheet.pg .sch>span{white-space:nowrap}
+#printFit .fitbox .sheet.pg .sch.sch4,#printRoot .sheet.pg .sch.sch4{justify-content:space-between}
+#printFit .fitbox .sheet.pg .sitem.big,#printRoot .sheet.pg .sitem.big{grid-template-columns:minmax(0,1fr) minmax(0,36%)!important}
+#printFit .fitbox .sheet.pg .sroom,#printRoot .sheet.pg .sroom{white-space:nowrap;font-size:13px!important;margin-top:5px!important}
+#printFit .fitbox .sheet.pg .sfact,#printRoot .sheet.pg .sfact{display:flex;align-items:center;gap:4px;min-width:0}
+#printFit .fitbox .sheet.pg .sfact u,#printRoot .sheet.pg .sfact u{flex:1 1 auto;width:auto!important;min-width:34px;align-self:flex-end;margin-bottom:4px}
+#printFit .fitbox .sheet.pg .sitem:not(.big) .sart svg,#printRoot .sheet.pg .sitem:not(.big) .sart svg{max-height:100px!important}
+#printFit .fitbox{width:8in!important}
+#printFit .fitbox .sheet.pg{height:auto!important}
+@media print{
+ @page{size:letter;margin:.25in}
+ #printRoot .sheet.pg{width:8in!important;height:10.45in!important;max-height:10.45in!important;overflow:hidden!important;margin:0 auto!important;page-break-after:always;break-after:page;page-break-inside:avoid;break-inside:avoid}
+ #printRoot .sheet.pg:last-child{page-break-after:auto;break-after:auto}
+ #printRoot .sheet.pg>.sitems{flex:1 1 auto}
+}
 /* fix: phone portrait — keep move-button labels on one line (icon above label) */
 @media (max-width:560px){.move-btns .btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:15px;line-height:1.1;white-space:nowrap;padding:6px 4px}}
 /* fix: phone landscape — let the helper bubble show its whole message */
@@ -3184,26 +3225,44 @@ function printProblems(id,type,want){const out=[];const seen=new Set();let g=0;
  if(type==='facts'){const T=gymSt().tables.length?st.gym.tables:[2,3,4,5,6,7,8,9,10];want=want||80;while(out.length<want&&g++<2000){const f=pickFact({tables:T,op:'mix'},[]);add({q:`${f.label} =`,num:1,ans:f.ans,fact:1})}return out}
  if(type==='word'){want=want||40;while(out.length<want&&g++<800){const P=WPT[pick(['groups','share','grouping','array','compare','twostep'])](3);add({q:P.t,num:1,ans:P.ans,why:`${P.eq} = ${P.ans}`,work:1})}return out}
  if(type==='tri'){want=want||16;while(out.length<want&&g++<800){const[a,b,p]=triFacts(3);const hide=pick(['top','bl','br']);const o={top:p,bl:a,br:b};o[hide]=null;add({q:'Find the missing number. Then write the 4 facts that live in rooms 1–4.',art:SV('0 0 600 470',triStr(Object.assign(o,{rooms:['Room 1 (×)','Room 2 (×)','Room 3 (÷)','Room 4 (÷)']}))),big:1,rooms:1,num:1,ans:hide==='top'?p:hide==='bl'?a:b,why:`${a} × ${b} = ${p}, ${b} × ${a} = ${p}, ${p} ÷ ${a} = ${b}, ${p} ÷ ${b} = ${a}`})}return out}
- const G=QUIZ[id];want=want||40;while(out.length<want&&g++<1200)add(G[out.length%G.length]());return out}
-function letterBudget(){return 9.85*96}
-function measurePrintSheets(html){let host=$('#printFit');if(!host){host=h('div',{id:'printFit'});document.body.append(host)}host.innerHTML='<div class="fitbox">'+html+'</div>';const sheets=host.querySelectorAll('.sheet');return{w:sheets[0]?sheets[0].scrollHeight:0,k:sheets[1]?sheets[1].scrollHeight:0}}
-function fitProblems(id,type){const cap=type==='facts'?96:type==='tri'?20:48;const pool=printProblems(id,type,cap);const budget=letterBudget();const ok=n=>{const h=measurePrintSheets(sheetHTML(id,type,pool.slice(0,n)));return h.w<=budget&&h.k<=budget};let minN=type==='facts'?20:type==='tri'?3:8;minN=Math.min(minN,pool.length);let best=1;
- if(!ok(minN)){let n=minN;while(n>1&&!ok(n))n--;best=Math.max(1,n)}else{let lo=minN,hi=pool.length;best=minN;while(lo<=hi){const mid=(lo+hi)>>1;if(ok(mid)){best=mid;lo=mid+1}else hi=mid-1}}
- const host=$('#printFit');if(host)host.innerHTML='';return pool.slice(0,best)}
-function sheetHTML(id,type,probs){const u=UNITS.find(x=>x.id===id);const tn=ptypes(id).find(t=>t[0]===type)[1];const stripTags=s=>String(s).replace(/<svg[\s\S]*?<\/svg>/g,'').replace(/<(?!\/?(span|i|b)\b)[^>]+>/g,'');
- const S=curSet(),g=guideOf(u),pal=S.members.filter(m=>m!==g).slice(0,3);
- const head=`<div class="shead" style="--c:${u.c}"><div class="sbanner" style="background-image:url(${IMG[u.img]})"></div><div class="sbud">${buddySVG(g,'')}</div><div class="stitle"><div class="sbrand">Fuzzy Buddies Math Quest</div><div class="sunit">${u.name}</div><div class="stype">${tn}</div></div><div class="sname">Name ____________________<br>Date ______________</div></div>`;
- const foot=`<div class="sfoot"><span class="sbuds">${pal.map(m=>buddySVG(m,'')).join('')}</span><span>You've got this! · Fuzzy Buddies Math Quest · ${u.fcps}</span></div>`;
- const L='ABCD';
- const items=probs.map((q,i)=>q.big?`<div class="sitem big"><div class="sbl"><div class="sq"><b class="snum">${i+1}</b> ${q.q}</div><div class="sans">Missing number: ________</div>${[1,2,3,4].map(n=>`<div class="sroom">Room ${n}: _____ ${n<3?'×':'÷'} _____ = _____</div>`).join('')}</div><div class="sart">${q.art}</div></div>`:q.fact?`<div class="sfact"><span class="snum">${i+1}</span> ${q.q} <u></u></div>`:`<div class="sitem${q.art?' wide':''}${q.big?' big':''}"><div class="sq"><b class="snum">${i+1}</b> ${q.q}</div>${q.art?`<div class="sart">${q.art}</div>`:''}${q.ch?`<div class="sch${q.ch.every(c=>{const r=q.render?q.render(String(c)):String(c);return !/<svg|<img/.test(r)&&r.replace(/<span class="fr"><i>(\d+)<\/i><i>(\d+)<\/i><\/span>/g,(m,a,b)=>'x'.repeat(Math.max(a.length,b.length))).replace(/\d+\/\d+/g,'xx').replace(/<[^>]+>/g,'').length<=6})?' sch4':''}">${q.ch.map((c,k)=>`<span><i class="sbub">${L[k]}</i> ${q.render?q.render(String(c)):c}</span>`).join('')}</div>`:''}${q.num||q.work?`<div class="sans">${q.work?'Number sentence: ______________________ &nbsp; ':''}Answer: ____________</div>`:''}${q.lines?'<div class="slines"></div>'.repeat(q.lines):''}${q.rooms?[1,2,3,4].map(n=>`<div class="sroom">Room ${n}: ______ ${n<3?'×':'÷'} ______ = ______</div>`).join(''):''}</div>`).join('');
- const key=probs.map((q,i)=>`<li><b>${q.ch?L[q.ch.map(String).indexOf(String(q.ans))]+'. ':''}${q.render?stripTags(q.render(String(q.ans))):stripTags(q.ans)}</b>${q.why&&!q.fact?` <span>${stripTags(q.why)}</span>`:''}</li>`).join('');
- return `<section class="sheet" style="--c:${u.c}">${head}<div class="${probs[0]&&probs[0].fact?'sfacts':'sitems'}">${items}</div>${foot}</section><section class="sheet skey" style="--c:${u.c}">${head.replace('Name ____________________<br>Date ______________','<b class="sstamp">ANSWER KEY</b><br><small>for grown-ups</small>')}<ol class="${probs[0]&&probs[0].fact?'kfacts':''}">${key}</ol>${foot}</section>`}
+ const G=QUIZ[id];want=want||40;let gi=0;while(out.length<want&&g++<1200){const n0=out.length;add(G[gi%G.length]());gi++}return out}
+/* Printable pages: a FRONT and a BACK worksheet page (both full of work, 2 columns) + an answer key page.
+   Each page is a fixed 8 x 10.45 in box (0.25 in page margins), so nothing can spill onto the next page in any browser (iPhone Safari included). */
+const PG_W=8*96,PG_H=10.45*96;
+function letterBudget(){return PG_H-6}
+function measureOne(html){let host=$('#printFit');if(!host){host=h('div',{id:'printFit'});document.body.append(host)}host.innerHTML='<div class="fitbox">'+html+'</div>';const sh=host.querySelector('.sheet');if(!sh)return 0;
+ /* anything poking out sideways (a cut-off column or answer line) counts as not fitting */
+ const r=sh.getBoundingClientRect().right-6;for(const e of sh.querySelectorAll('.sitem,.sfact,.sroom,.sch,.sans,.sart svg'))if(e.getBoundingClientRect().right>r||e.scrollWidth>e.clientWidth+2)return 1e9;return sh.scrollHeight}
+function measurePrintSheets(html){let host=$('#printFit');if(!host){host=h('div',{id:'printFit'});document.body.append(host)}host.innerHTML='<div class="fitbox">'+html+'</div>';const sheets=host.querySelectorAll('.sheet');return{w:sheets[0]?sheets[0].scrollHeight:0,k:sheets[sheets.length-1]?sheets[sheets.length-1].scrollHeight:0}}
+function colChoices(type){return type==='facts'?[4,5]:type==='tri'?[2]:[2,3]}
+function fitPage(id,type,pool,start,side){const budget=letterBudget();const left=pool.length-start;if(left<=0)return{n:0};let best={n:0};
+ for(const cols of colChoices(type)){const ok=n=>measureOne(pageHTML(id,type,pool.slice(start,start+n),start,side,{cols,grow:0}))<=budget;let b=1;if(ok(1)){let lo=1,hi=left;while(lo<=hi){const mid=(lo+hi)>>1;if(ok(mid)){b=mid;lo=mid+1}else hi=mid-1}}if(b>best.n)best={n:b,cols}}
+ /* hand the leftover height to the problems as extra work room, so nothing is blank at the bottom */
+ const L={cols:best.cols,grow:0};const sl=pool.slice(start,start+best.n);let lo=0,hi=240;while(hi-lo>1){const mid=(lo+hi)>>1;if(measureOne(pageHTML(id,type,sl,start,side,{cols:best.cols,grow:mid}))<=budget)lo=mid;else hi=mid}L.grow=lo;best.lay=L;return best}
+function fitProblems(id,type){const cap=type==='facts'?200:type==='tri'?24:80;const pool=printProblems(id,type,cap);const F=fitPage(id,type,pool,0,'front');const B=fitPage(id,type,pool,F.n,'back');const host=$('#printFit');if(host)host.innerHTML='';const probs=pool.slice(0,F.n+B.n);probs.split=F.n;probs.lay=[F.lay,B.lay];return probs}
+function sheetParts(id,type){const u=UNITS.find(x=>x.id===id);const tn=ptypes(id).find(t=>t[0]===type)[1];const S=curSet(),g=guideOf(u),pal=S.members.filter(m=>m!==g).slice(0,3);return{u,tn,g,pal}}
+function headHTML(id,type,mode){const{u,tn,g}=sheetParts(id,type);
+ const right=mode==='key'?'<b class="sstamp">ANSWER KEY</b><br><small>for grown-ups</small>':mode==='back'?'<b class="sside">Back side</b>':'Name ____________________<br>Date ______________';
+ return `<div class="shead${mode==='back'?' slim':''}" style="--c:${u.c}"><div class="sbanner" style="background-image:url(${IMG[u.img]})"></div><div class="sbud">${buddySVG(g,'')}</div><div class="stitle"><div class="sbrand">Fuzzy Buddies Math Quest</div><div class="sunit">${u.name}</div><div class="stype">${tn}${mode==='back'?' · part 2':''}</div></div><div class="sname">${right}</div></div>`}
+function footHTML(id,type,txt){const{u,pal}=sheetParts(id,type);return `<div class="sfoot"><span class="sbuds">${pal.map(m=>buddySVG(m,'')).join('')}</span><span>${txt||("You've got this! · Fuzzy Buddies Math Quest · "+u.fcps)}</span></div>`}
+function itemsHTML(probs,offset){const L='ABCD';return probs.map((q,ii)=>{const i=ii+offset;return q.big?`<div class="sitem big"><div class="sbl"><div class="sq"><b class="snum">${i+1}</b> ${q.q}</div><div class="sans">Missing number: ______</div>${[1,2,3,4].map(n=>`<div class="sroom">Room ${n}: ____ ${n<3?'×':'÷'} ____ = ____</div>`).join('')}</div><div class="sart">${q.art}</div></div>`:q.fact?`<div class="sfact"><span class="snum">${i+1}</span> ${q.q} <u></u></div>`:`<div class="sitem${q.art?' wide':''}"><div class="sq"><b class="snum">${i+1}</b> ${q.q}</div>${q.art?`<div class="sart">${q.art}</div>`:''}${q.ch?`<div class="sch${q.ch.every(c=>{const r=q.render?q.render(String(c)):String(c);return !/<svg|<img/.test(r)&&r.replace(/<span class="fr"><i>(\d+)<\/i><i>(\d+)<\/i><\/span>/g,(m,a,b)=>'x'.repeat(Math.max(a.length,b.length))).replace(/\d+\/\d+/g,'xx').replace(/<[^>]+>/g,'').length<=6})?' sch4':''}">${q.ch.map((c,k)=>`<span><i class="sbub">${L[k]}</i> ${q.render?q.render(String(c)):c}</span>`).join('')}</div>`:''}${q.num||q.work?`<div class="sans">${q.work?'Number sentence: ______________________ &nbsp; ':''}Answer: ____________</div>`:''}${q.lines?'<div class="slines"></div>'.repeat(q.lines):''}${q.rooms?[1,2,3,4].map(n=>`<div class="sroom">Room ${n}: ______ ${n<3?'×':'÷'} ______ = ______</div>`).join(''):''}</div>`}).join('')}
+function pageHTML(id,type,probs,offset,side,lay){const{u}=sheetParts(id,type);const facts=probs[0]&&probs[0].fact;lay=lay||{cols:facts?4:2,grow:0};
+ return `<section class="sheet pg ${side}" style="--c:${u.c};--cols:${lay.cols};--grow:${lay.grow/Math.max(1,Math.ceil(probs.length/lay.cols))}px">${headHTML(id,type,side)}<div class="${facts?'sfacts':'sitems'}">${itemsHTML(probs,offset)}</div>${footHTML(id,type,side==='front'?'Turn the page over for more ➜':null)}</section>`}
+function keyHTML(id,type,probs,compact,fs){const{u}=sheetParts(id,type);const L='ABCD';const stripTags=s=>String(s).replace(/<svg[\s\S]*?<\/svg>/g,'').replace(/<(?!\/?(span|i|b)\b)[^>]+>/g,'');const facts=probs[0]&&probs[0].fact;
+ const key=probs.map((q,i)=>`<li><b>${q.ch?L[q.ch.map(String).indexOf(String(q.ans))]+'. ':''}${q.render?stripTags(q.render(String(q.ans))):stripTags(q.ans)}</b>${q.why&&!q.fact&&!compact?` <span>${stripTags(q.why)}</span>`:''}</li>`).join('');
+ return `<section class="sheet pg skey" style="--c:${u.c};--kfs:${fs||14}px">${headHTML(id,type,'key')}<ol class="${facts?'kfacts':compact?'kcompact':''}">${key}</ol>${footHTML(id,type)}</section>`}
+function sheetHTML(id,type,probs){const nF=probs.split!=null?probs.split:probs.length;const lay=probs.lay||[];const front=pageHTML(id,type,probs.slice(0,nF),0,'front',lay[0]);const back=nF<probs.length?pageHTML(id,type,probs.slice(nF),nF,'back',lay[1]):'';
+ const B=letterBudget();let compact=measureOne(keyHTML(id,type,probs,false,11))>B;let fs=11;for(let f=20;f>=11;f--){if(measureOne(keyHTML(id,type,probs,compact,f))<=B-12){fs=f;break}}let key=keyHTML(id,type,probs,compact,fs);const host=$('#printFit');if(host)host.innerHTML='';return front+back+key}
 function showPrint(id,type){const u=UNITS.find(x=>x.id===id);type=type||'mix';leave();document.documentElement.style.setProperty('--c',u.c);
- const probs=fitProblems(id,type);const html=sheetHTML(id,type,probs);let pr=$('#printRoot');if(!pr){pr=h('div',{id:'printRoot'});document.body.append(pr)}pr.innerHTML=html;
+ let pr=$('#printRoot');if(!pr){pr=h('div',{id:'printRoot'});document.body.append(pr)}pr.innerHTML='';
+ const box=h('div',{class:'sheets'},h('p',{class:'small'},'Making your pages…'));
  main.append(h('div',{class:'printwrap',style:`--c:${u.c}`},h('div',{class:'ptools'},h('button',{class:'back',id:'pBack',onclick:()=>{pr.innerHTML='';id==='factory'&&type==='facts'?showFacts():showUnit(id)}},'◀ '+u.short),h('b',{},'Print a worksheet'),
    h('div',{class:'seg'},ptypes(id).map(([k,l])=>h('button',{class:'segb'+(k===type?' on':''),'data-ptype':k,onclick:()=>showPrint(id,k)},l))),
    h('button',{class:'btn',id:'pNew',onclick:()=>showPrint(id,type)},'↻ New problems'),h('button',{class:'btn go',id:'pPrint',onclick:()=>window.print()},'🖨 Print')),
-  h('p',{class:'small pnote'},'Page 1 is the worksheet, filled for US Letter (8.5×11 in). Page 2 is the answer key (for grown-ups). Print double-sided in full color (turn on "Background graphics" if your printer asks).'),h('div',{class:'sheets',html})))}
+  h('p',{class:'small pnote'},'Page 1 (front) and page 2 (back) are the worksheet, filled for US Letter. Page 3 is the answer key for grown-ups: print pages 1–2 double-sided, then page 3 on its own. Turn on "Background graphics" if your printer asks.'),box));
+ /* Measure only after the worksheet font has loaded, so the page fill matches what prints. */
+ const build=()=>{const probs=fitProblems(id,type);const html=sheetHTML(id,type,probs);pr.innerHTML=html;box.innerHTML=html};
+ const fr=document.fonts&&document.fonts.ready;if(fr){Promise.race([fr,new Promise(r=>setTimeout(r,2500))]).then(build)}else build()}
 window.__mq.showFacts=showFacts;window.__mq.runGym=runGym;window.__mq.showPrint=showPrint;window.__mq.factMastered=factMastered;window.__mq.printProblems=printProblems;window.__mq.fitProblems=fitProblems;
 
 })();
