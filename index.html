@@ -233,6 +233,7 @@ main{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
 .act.playfull .bins{flex:1 1 auto;min-height:0;height:auto;gap:12px;align-items:stretch}
 .act.playfull .bin{min-height:0;height:100%;padding:8px;gap:6px;display:flex;flex-direction:column;overflow:hidden}
 .act.playfull .bin-label{flex:0 0 auto;position:relative;z-index:2;background:#FAF5FF;padding:2px 4px 6px;font-size:20px}
+@media (max-width:500px){.act.playfull .bins:has(> .bin:nth-child(3)) .bin-label{font-size:16px;word-break:break-word}}
 .act.playfull .bin-items{flex:1 1 auto;min-height:0;overflow:auto;align-content:safe center;align-items:center;justify-content:center;gap:8px}
 .act.playfull .sorter.bottom.tray-empty{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
 .act.playfull .sorter.bottom.tray-empty .tray{display:none}
@@ -1216,6 +1217,15 @@ function startRound(){if(run.round>0){main.scrollTop=0;window.scrollTo(0,0)}run.
 function fitSorter(){if(!run||!run.stage)return;const wrap=run.stage.querySelector('.sorter');if(!wrap)return;
   const tray=wrap.querySelector('.tray');const row=wrap.querySelector('.bins');if(!tray||!row)return;
   const bins=[...row.querySelectorAll(':scope > .bin')];
+  const phone=matchMedia('(max-width:900px)').matches;let phoneH=0;
+  if(phone){/* fixed-height stage that fits the visible screen: tray + both bins always on screen, never shrinking as tiles are sorted */
+    let sc=run.stage.parentElement;while(sc&&sc!==document.body){const o=getComputedStyle(sc).overflowY;if((o==='auto'||o==='scroll')&&sc.clientHeight>0)break;sc=sc.parentElement}if(!sc||sc===document.body)sc=document.scrollingElement;
+    const scTop=sc===document.scrollingElement?0:sc.getBoundingClientRect().top,vis=sc===document.scrollingElement?innerHeight:sc.clientHeight;
+    const stTop=run.stage.getBoundingClientRect().top-scTop+sc.scrollTop;const ctl=run.controls&&run.controls.offsetHeight?run.controls.offsetHeight+8:0;
+    phoneH=Math.round(Math.max(360,Math.min(vis-(stTop-0)-ctl-10,vis-80,700)));
+    run.stage.style.height=phoneH+'px';run.stage.style.minHeight=phoneH+'px';run.stage.style.flex='0 0 auto';
+    tray.style.flex='0 0 auto';row.style.flex='1 1 auto';row.style.minHeight='130px';
+    requestAnimationFrame(()=>{if(!run||!run.stage)return;const sb=sc===document.scrollingElement?innerHeight:sc.getBoundingClientRect().bottom;const over=run.stage.getBoundingClientRect().bottom+ctl+6-sb;if(over>1)sc.scrollTop+=over})}
   const tileFit=(tw,th,n,gap=12)=>{if(tw<40||th<40||!n)return 0;let best=0;for(let cols=n;cols>=1;cols--){const rows=Math.ceil(n/cols);const s=Math.floor(Math.min((tw-gap*(cols-1)-8)/cols,(th-gap*(rows-1)-8)/rows));if(s>best)best=s}return best};
   const nTiles=tray.querySelectorAll(':scope > .tile').length||6;
   const W=run.stage.clientWidth,H=run.stage.clientHeight;
@@ -1227,7 +1237,9 @@ function fitSorter(){if(!run||!run.stage)return;const wrap=run.stage.querySelect
   const sizeTray=()=>{const tiles=[...tray.querySelectorAll(':scope > .tile')];const n=tiles.length;if(!n)return 0;
     let best;
     if(matchMedia('(max-width:900px)').matches){/* phone/tablet-portrait: page is auto-height, so tray height depends on the tiles. Size from width only (max 3 per row) to avoid a runaway feedback loop. */
-      const cols=Math.min(n,3),gap=12;best=Math.floor((tray.clientWidth-gap*(cols-1)-8)/cols);best=Math.max(72,Math.min(best||72,150))}
+      const cols=Math.min(n,3),gap=12,rows=Math.ceil(n/cols);best=Math.floor((tray.clientWidth-gap*(cols-1)-8)/cols);
+      if(phoneH){const trayAvail=phoneH-20-12-150;best=Math.min(best,Math.floor((trayAvail-8-gap*(rows-1))/rows))}
+      best=Math.max(64,Math.min(best||64,150))}
     else{best=tileFit(tray.clientWidth,tray.clientHeight,n);
     best=Math.max(88,Math.min(best||88,260))}
     tiles.forEach(t=>{t.style.width=t.style.height=best+'px'});return best};
