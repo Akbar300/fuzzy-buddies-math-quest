@@ -614,7 +614,7 @@ a.xcard,a.acard{color:inherit;text-decoration:none}
  .lhero{height:56px}.lnav .btn{min-height:48px;font-size:17px}.ldots .dot{width:9px;height:9px}.ldots{gap:3px;flex-wrap:wrap;flex:1;justify-content:center}}
 @media (max-height:700px) and (max-width:560px){.stage.ar{max-height:44vh}.prompt h2{font-size:18px}.prompt p{font-size:14px}.topbar{padding:3px 6px}}
 .spfig{display:block;width:100%}.spfig svg{width:100%;height:auto;max-height:118px;display:block}
-.qchoices.spfigs .btn{min-height:104px;padding:6px}
+.qchoices.spfigs .btn{min-height:104px;padding:6px}@media (min-width:700px){.spfig svg{max-height:170px}.qchoices.spfigs .btn{min-height:150px}}
 .qchoices .btn.sel{outline:4px solid var(--c);outline-offset:-2px;background:#F5F3FF}
 .spseg{display:grid;grid-template-columns:1fr 1fr;gap:8px}.spseg .segb{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;text-align:left;border-radius:14px;border:3px solid #DDD6FE;background:#fff;font-size:18px;cursor:pointer}.spseg .segb.on{border-color:var(--c);background:#F5F3FF}.spseg small{font-size:14px;color:#6B7280}
 .spsetup h3{margin:12px 0 6px}.spsetup .wide{margin-top:14px;width:100%}
@@ -1609,14 +1609,15 @@ function symInfo(P){const c=areaCentroid(P),n=P.length,raw=[];P.forEach((v,i)=>{
 const SYMKEYS=['square','rectangle','rhombus','parallelogram','equilateral','isosceles','scalene','isoTrap','kite','pentagon','hexagon','octagon','house','oneRight','rightTrapezoid'];
 function axisLine(c,a,len=60,attrs={}){const d=[Math.cos(a),Math.sin(a)];const lim=v=>{let L=len;for(let i=0;i<2;i++)if(Math.abs(v[i])>1e-9)L=Math.min(L,((v[i]>0?62:-62)-c[i])/v[i]);return Math.max(L,0)};const L1=lim(d),L2=lim([-d[0],-d[1]]);return s('line',Object.assign({x1:c[0]-d[0]*L2,y1:c[1]-d[1]*L2,x2:c[0]+d[0]*L1,y2:c[1]+d[1]*L1,stroke:'#DB2777','stroke-width':1.6,'stroke-dasharray':'4 3','stroke-linecap':'round'},attrs))}
 function reflectedOutline(P,c,a){return s('polygon',{points:P.map(p=>reflectPt(p,c,a).map(v=>v.toFixed(2)).join(',')).join(' '),fill:'none',stroke:'#F97316','stroke-width':1.8,'stroke-dasharray':'3 2',class:'popin'})}
+function fullRect(svg){const v=svg.viewBox&&svg.viewBox.baseVal;return s('rect',{x:v?v.x:-500,y:v?v.y:-500,width:v?v.width:1000,height:v?v.height:1000,fill:'#fff','fill-opacity':.001,'pointer-events':'none'})}
 function clipHalf(P,c,a){const nx=-Math.sin(a),ny=Math.cos(a);const d=p=>(p[0]-c[0])*nx+(p[1]-c[1])*ny;const out=[];for(let i=0;i<P.length;i++){const A=P[i],B=P[(i+1)%P.length],da=d(A),db=d(B);if(da>=0)out.push(A);if((da>=0)!==(db>=0)){const k=da/(da-db);out.push([A[0]+(B[0]-A[0])*k,A[1]+(B[1]-A[1])*k])}}return out}
 /* Fold animation: one half of the shape flips over the fold line, holds, then folds back. */
 function foldPlay(svg,P,c,a,ok,done){
  if(svg._fold)svg._fold.cancel();
  const H=clipHalf(P,c,a);if(H.length<3){if(done)done();return}
  const deg=a/D2R,ease=u=>u*u*(3-2*u);
- const g=s('g',{});const poly=s('polygon',{points:'',fill:'#FB923C','fill-opacity':.85,stroke:'#EA580C','stroke-width':1.4,'stroke-linejoin':'round'});g.append(poly);
- const ax=Math.cos(a),ay=Math.sin(a),setU=u=>{const k=Math.cos(Math.PI*u);poly.setAttribute('points',H.map(p=>{const dx=p[0]-c[0],dy=p[1]-c[1],al=dx*ax+dy*ay,pe=-dx*ay+dy*ax;return (c[0]+al*ax-pe*k*ay).toFixed(2)+','+(c[1]+al*ay+pe*k*ax).toFixed(2)}).join(' '))};setU(0);
+ const g=s('g',{'pointer-events':'none'});g.append(fullRect(svg));let poly=s('polygon',{points:'',fill:'#FB923C','fill-opacity':.85,stroke:'#EA580C','stroke-width':1.4,'stroke-linejoin':'round'});g.append(poly);
+ const ax=Math.cos(a),ay=Math.sin(a),setU=u=>{const k=Math.cos(Math.PI*u);const np=poly.cloneNode();poly.replaceWith(np);poly=np;poly.setAttribute('points',H.map(p=>{const dx=p[0]-c[0],dy=p[1]-c[1],al=dx*ax+dy*ay,pe=-dx*ay+dy*ax;return (c[0]+al*ax-pe*k*ay).toFixed(2)+','+(c[1]+al*ay+pe*k*ax).toFixed(2)}).join(' '))};setU(0);
  const fl=axisLine(c,a,70,{'stroke-dasharray':'none','stroke-width':2.2});
  const lab=s('text',{x:0,y:-54,'text-anchor':'middle','font-size':9,'font-weight':800,fill:ok?'#15803D':'#B91C1C',stroke:'#fff','stroke-width':3,'paint-order':'stroke'});lab.textContent=ok?'The halves match!':'It sticks out!';
  svg.append(fl,g);let raf=0,dead=false,labShown=false;const t0=performance.now();
@@ -1667,8 +1668,8 @@ function tween(svg,ms,f,done){let dead=false,raf=0;const t0=performance.now();co
 function opAt(k,L,u){const c=Math.cos(Math.PI*u);if(k==='fh')return L.map(([x,y])=>[x*c,y]);if(k==='fv')return L.map(([x,y])=>[x,y*c]);const a=u*Math.PI/2,ca=Math.cos(a),sa=Math.sin(a);return L.map(([x,y])=>[x*ca-y*sa,x*sa+y*ca])}
 /* ghost copy of the blue shape travels to the orange one doing the move */
 function moveShow(svg,L,A,B,type,k){if(svg._mv)svg._mv.cancel();svg.querySelectorAll('.mvghost').forEach(x=>x.remove());
- const g=s('polygon',{class:'mvghost',fill:'#60A5FA','fill-opacity':.7,stroke:'#1D4ED8','stroke-width':1.6,'stroke-dasharray':'3 2','stroke-linejoin':'round','pointer-events':'none'});const d=s('circle',{class:'mvghost',r:2.6,fill:'#1D4ED8','pointer-events':'none'});svg.append(g,d);
- const put=W=>{g.setAttribute('points',ptsAttr(W));const q=[W[0][0]+(W[0][0]-W.cx)*-.3,W[0][1]+(W[0][1]-W.cy)*-.3];d.setAttribute('cx',q[0].toFixed(2));d.setAttribute('cy',q[1].toFixed(2))};
+ const g=s('polygon',{class:'mvghost',fill:'#60A5FA','fill-opacity':.7,stroke:'#1D4ED8','stroke-width':1.6,'stroke-dasharray':'3 2','stroke-linejoin':'round','pointer-events':'none'});const d=s('circle',{class:'mvghost',r:2.6,fill:'#1D4ED8','pointer-events':'none'});const gw=s('g',{class:'mvghost','pointer-events':'none'});gw.append(fullRect(svg),g,d);svg.append(gw);let gg=g;
+ const put=W=>{const ng=gg.cloneNode();gg.replaceWith(ng);gg=ng;gg.setAttribute('points',ptsAttr(W));const q=[W[0][0]+(W[0][0]-W.cx)*-.3,W[0][1]+(W[0][1]-W.cy)*-.3];d.setAttribute('cx',q[0].toFixed(2));d.setAttribute('cy',q[1].toFixed(2))};
  const frame=u=>{let W;
   if(type==='slide'){const c=[A[0]+(B[0]-A[0])*u,A[1]+(B[1]-A[1])*u];W=placed(L,c);W.cx=c[0];W.cy=c[1]}
   else if(type==='fh'){const m=(A[0]+B[0])/2,cs=Math.cos(Math.PI*u);W=placed(L,A).map(([x,y])=>[m+(x-m)*cs,y]);W.cx=m+(A[0]-m)*cs;W.cy=A[1]}
@@ -1676,9 +1677,9 @@ function moveShow(svg,L,A,B,type,k){if(svg._mv)svg._mv.cancel();svg.querySelecto
   else{const a=u*k*Math.PI/2,ca=Math.cos(a),sa=Math.sin(a);const c=[A[0]+(B[0]-A[0])*u,A[1]+(B[1]-A[1])*u];W=placed(L.map(([x,y])=>[x*ca-y*sa,x*sa+y*ca]),c);W.cx=c[0];W.cy=c[1]}
   put(W)};
  const ms=type==='turn'?1500+k*250:1400;
- svg._mv=tween(svg,ms,frame,()=>{svg._mv=setTimeoutCtl(svg,1100,()=>{g.remove();d.remove();svg._mv=null})})}
+ svg._mv=tween(svg,ms,frame,()=>{svg._mv=setTimeoutCtl(svg,1100,()=>{gw.remove();svg._mv=null})})}
 function setTimeoutCtl(svg,ms,f){const id=setTimeout(()=>{if(svg.isConnected)f()},ms);return{cancel(){clearTimeout(id)}}}
-function movePiece(api,svg,L0,c0,onChange){let busy=false,anim=null;let L=L0.map(p=>p.slice()),c=c0.slice();const poly=s('polygon',{fill:'#FDBA74',stroke:'#1E1B4B','stroke-width':1.6,'stroke-linejoin':'round',id:'piece',style:'cursor:grab'});const dotm=s('circle',{r:2.4,fill:'#1E1B4B','pointer-events':'none'});svg.append(poly,dotm);
+function movePiece(api,svg,L0,c0,onChange){let busy=false,anim=null;let L=L0.map(p=>p.slice()),c=c0.slice();const poly=s('polygon',{fill:'#FDBA74',stroke:'#1E1B4B','stroke-width':1.6,'stroke-linejoin':'round',id:'piece',style:'cursor:grab'});const dotm=s('circle',{r:2.4,fill:'#1E1B4B','pointer-events':'none'});const pg=s('g',{});pg.append(fullRect(svg),poly,dotm);svg.append(pg);
  const drawW=(LL,cc)=>{poly.setAttribute('points',ptsAttr(placed(LL,cc)));dotm.setAttribute('cx',cc[0]+LL[0][0]*.7);dotm.setAttribute('cy',cc[1]+LL[0][1]*.7)};const draw=()=>drawW(L,c);draw();
  const animOp=(k,cb)=>{busy=true;const L0=L;anim=tween(svg,420,u=>drawW(opAt(k,L0,u),c),()=>{L=OPS[k](L0);draw();busy=false;cb&&cb()})};
  const animTo=(v,ms,cb)=>{busy=true;const c0=c.slice();anim=tween(svg,ms,u=>{c=[c0[0]+(v[0]-c0[0])*u,c0[1]+(v[1]-c0[1])*u];draw()},()=>{busy=false;cb&&cb()})};
@@ -3336,7 +3337,7 @@ function showUnit(id){const u=UNITS.find(x=>x.id===id);leave();document.document
  const cards=[acard('learn',iconFor('learn'),'Learn it!',`${LEARN[u.id].length} steps: key words, pictures, worked examples and try-its.`,[st.learned[u.id]?h('span',{class:'st'},'✓'):''],()=>showLearn(u.id),{id:'learnCard'}),
   ...u.acts.map(a=>{const A=ACT[a];const p=st.prog[a];return acard('',iconFor(A.icon),A.name,A.blurb,[A.challenge?h('span',{class:'tagcz'},'Challenge Zone'):'',A.bonus?h('span',{class:'tagbonus'},'Bonus'):'',h('span',{class:'st'},starStr(bestOf(a)))],()=>showActivity(a),{'data-act':a})}),
   ...(u.id==='factory'?[acard('gym',iconFor('sprint'),'Fact Gym','Adaptive × and ÷ facts 0–12, timed or untimed, with your fact map.',[h('span',{class:'st'},`★ ${factMastered()} of 169`)],()=>showFacts(),{id:'gymCard'})]:[]),
-  ...(SOLP[u.id]?[acard('solprep',iconFor('solprep'),'SOL Prep',`Real SOL-style questions for ${SOLP[u.id].std}. SOL Core or AAP Challenge, in Practice or Test mode.`,[st.solp&&st.solp[u.id]&&st.solp[u.id].core.best?h('span',{class:'st'},`Best ${st.solp[u.id].core.best}%`):''],()=>showSolPrep(u.id),{id:'solPrepCard'})]:[]),
+  ...(SOLP[u.id]?[acard('solprep',iconFor('solprep'),'SOL Prep',`Real SOL-style questions for ${SOLP[u.id].std}. SOL Core or Deep Thinker, in Practice or Test mode.`,[st.solp&&st.solp[u.id]&&st.solp[u.id].core.best?h('span',{class:'st'},`Best ${st.solp[u.id].core.best}%`):''],()=>showSolPrep(u.id),{id:'solPrepCard'})]:[]),
   acard('quiz',iconFor('quiz'),'Mastery Quiz',`10 new questions each time. Get 8 right to earn the ${u.name} badge! Best: ${st.quiz[u.id]||0} of 10`,[mastered(u.id)?h('span',{class:'crown'},'♛'):''],()=>showQuiz(u.id),{id:'quizCard'})];
  cards.push(acard('print',iconFor('print'),'Print a worksheet','Paper practice with an answer key. Great for screen-free time!',[],()=>showPrint(u.id),{id:'printCard'}));
  main.append(h('div',{class:'upage',style:`--c:${u.c}`},banner,u.note?h('div',{class:'unote',id:'unitNote',html:'🥋 '+u.note}):'',h('div',{class:'alist'},cards)))}
@@ -3524,19 +3525,19 @@ function showSolPrep(uid){const P=SOLP[uid],u=UNITS.find(x=>x.id===uid);leave();
  const seg=(opts,get,set)=>{const w=h('div',{class:'seg spseg'});const draw=()=>{w.innerHTML='';opts.forEach(([v,l,sub])=>w.append(h('button',{class:'segb'+(get()===v?' on':''),'data-v':v,onclick:()=>{sfx.tap();set(v);draw();info()}},h('b',{},l),h('small',{},sub))))};draw();return w};
  const stdBox=h('div',{class:'spstd'});
  const info=()=>{stdBox.innerHTML='';const rows=Object.entries(S.std).filter(([k])=>SPSTD[k]&&(track==='core'?k.startsWith('3.'):!k.startsWith('3.')));const T=S[track];
-  stdBox.append(h('p',{class:'muted'},`Best ${track==='core'?'SOL Core':'AAP'} test: ${T.best?T.best+'%':'not yet'} · Tests taken: ${T.tests} · Questions to review: ${Object.keys(T.miss).length}`));
+  stdBox.append(h('p',{class:'muted'},`Best ${track==='core'?'SOL Core':'Deep Thinker'} test: ${T.best?T.best+'%':'not yet'} · Tests taken: ${T.tests} · Questions to review: ${Object.keys(T.miss).length}`));
   if(rows.length)rows.forEach(([k,[r,n]])=>{const pc=Math.round(100*r/n);stdBox.append(h('div',{class:'sprow'},h('span',{},`${k.startsWith('3.')?k+' · ':''}${SPSTD[k]}`),h('div',{class:'bar'},h('i',{style:`width:${pc}%;background:${pc>=80?'#16A34A':pc>=60?'#F59E0B':'#E11D48'}`})),h('b',{},pc+'%')))});else stdBox.append(h('p',{class:'muted'},'Your scores for each SOL skill will show up here.'))};
  const g=curSet().members[0];
  main.append(h('div',{class:'quizwrap sprep',style:`--c:${u.c}`},h('div',{class:'qtop'},h('button',{class:'back',id:'spBack',onclick:()=>showUnit(uid)},'◀ '+u.short),h('b',{},`${u.name} · SOL Prep`),h('span',{class:'pill'},'SOL '+P.std)),
   h('div',{class:'box spsetup'},h('div',{class:'bud'},mascotEl('bob',g),h('div',{class:'bubble'},h('b',{class:'who'},BUDDY[g].name+': '),'These look like real SOL questions: pick one, pick ALL, type a number, or pick a picture. Practice gives help after every question. Test waits until the end, just like the real SOL.')),
-   h('h3',{},'1. Level'),seg([['core','SOL Core','Grade 3 standard'],['aap','AAP Challenge','Deeper thinking ★']],()=>track,v=>{track=v}),
-   h('h3',{},'2. Mode'),seg([['practice','Practice','10 questions, help after each'],['test','Test',`${P.testN.core} Core / ${P.testN.aap} AAP, score at the end`]],()=>mode,v=>{mode=v}),
+   h('h3',{},'1. Level'),seg([['core','SOL Core','Grade 3 standard'],['aap','Deep Thinker ★','Beyond grade level']],()=>track,v=>{track=v}),
+   h('h3',{},'2. Mode'),seg([['practice','Practice','10 questions, help after each'],['test','Test',`${P.testN.core} Core / ${P.testN.aap} Deep Thinker, score at the end`]],()=>mode,v=>{mode=v}),
    h('button',{class:'btn go wide',id:'spStart',onclick:()=>{sfx.tap();S.lastTrack=track;S.lastMode=mode;save();runSol(uid,track,mode)}},'Start ▶')),
   h('div',{class:'box'},h('h3',{},'My SOL skills'),stdBox)));info()}
 function runSol(uid,track,mode,items){const P=SOLP[uid],u=UNITS.find(x=>x.id===uid),S=spState(uid);items=items||spPlan(uid,track,mode);leave();
  const R={i:0,ans:[],ok:[],requeued:new Set()};const test=mode==='test';const wrap=h('div',{class:'quizwrap sprun',style:`--c:${u.c}`});main.append(wrap);
  run={id:'solprep',dbg:{get item(){return items[R.i]}},keyHandler:null};
- const title=`${track==='core'?'SOL Core':'AAP Challenge'} · ${test?'Test':'Practice'}`;
+ const title=`${track==='core'?'SOL Core':'Deep Thinker ★'} · ${test?'Test':'Practice'}`;
  const draw=()=>{const it=items[R.i];wrap.innerHTML='';let picked=it.type==='multi'?[]:null,val='',locked=false;
   const dots=h('div',{class:'dots'},items.map((_,k)=>h('span',{class:'dot'+(k<R.i?(test?' done':(R.ok[k]?' done':' miss')):k===R.i?' cur':'')})));
   const feed=h('div',{class:'qfeed',style:'display:none'});const next=h('button',{class:'btn go',id:'spNext',style:'display:none',onclick:()=>{sfx.tap();R.i++;if(R.i>=items.length)finish();else draw()}},R.i===items.length-1?(test?'Finish test ★':'See my results ★'):'Next ▶');
