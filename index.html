@@ -1220,8 +1220,11 @@ function fitSorter(){if(!run||!run.stage)return;const wrap=run.stage.querySelect
   const nLeft=tray.querySelectorAll(':scope > .tile').length;
   wrap.classList.toggle('tray-empty',nLeft===0);
   const sizeTray=()=>{const tiles=[...tray.querySelectorAll(':scope > .tile')];const n=tiles.length;if(!n)return 0;
-    let best=tileFit(tray.clientWidth,tray.clientHeight,n);
-    best=Math.max(88,Math.min(best||88,260));
+    let best;
+    if(matchMedia('(max-width:900px)').matches){/* phone/tablet-portrait: page is auto-height, so tray height depends on the tiles. Size from width only (max 3 per row) to avoid a runaway feedback loop. */
+      const cols=Math.min(n,3),gap=12;best=Math.floor((tray.clientWidth-gap*(cols-1)-8)/cols);best=Math.max(72,Math.min(best||72,150))}
+    else{best=tileFit(tray.clientWidth,tray.clientHeight,n);
+    best=Math.max(88,Math.min(best||88,260))}
     tiles.forEach(t=>{t.style.width=t.style.height=best+'px'});return best};
   const sizeBins=(traySize)=>{bins.forEach(b=>{const box=b.querySelector('.bin-items');if(!box)return;
     const bt=[...box.querySelectorAll('.tile')];if(!bt.length)return;
@@ -1783,33 +1786,44 @@ function periRound(lvl,api){
 
 /* ======================= ACTIVITY 6: AREA BUILDER ======================= */
 function areaRound(lvl,api){const C=10;
- if(lvl===0){const g=Math.random()<.5?rectCells(rnd(2,6),rnd(2,4)):skyline(rnd(3,5),rnd(2,4));const cols=g.w+2,rows=g.h+2,A=g.cells.size;const svg=s('svg',{viewBox:`0 0 ${cols*C} ${rows*C}`,id:'areaSvg'});api.stage.append(svg);const lay=s('g');gridLines(lay,cols,rows,C);svg.append(lay);
+ if(lvl===0||lvl===1){let g,miss=new Set(),W,H;
+  if(lvl===0){g=rectCells(rnd(2,6),rnd(2,5));if(g.w===1||g.h===1)g=rectCells(3,2)}
+  else if(Math.random()<.7){W=rnd(3,6);H=rnd(3,5);const base=rectCells(W,H),cells=new Set(base.cells);const want=rnd(1,Math.min(4,Math.floor(W*H/4)));const style=pick(['corner','edge','hole','mix']);
+   const isCorner=k=>{const[x,y]=k.split(',').map(Number);return(x===0||x===W-1)&&(y===0||y===H-1)};const isEdge=k=>{const[x,y]=k.split(',').map(Number);return x===0||x===W-1||y===0||y===H-1};
+   let pool=[...cells].filter(k=>style==='corner'?isCorner(k):style==='edge'?isEdge(k):style==='hole'?!isEdge(k):true);if(!pool.length)pool=[...cells].filter(isCorner);
+   for(let t=0;t<200&&miss.size<want;t++){const k=pick(pool);if(miss.has(k))continue;cells.delete(k);if(connected(cells)){miss.add(k)}else cells.add(k)}
+   if(!miss.size){const k=`${W-1},0`;cells.delete(k);miss.add(k)}g={cells,w:W,h:H,miss:true}}
+  else{do{g=skyline(rnd(3,6),rnd(3,4))}while(g.cells.size===g.w*g.h||g.cells.size<4||g.w*g.h-g.cells.size>5);for(let x=0;x<g.w;x++)for(let y=0;y<g.h;y++)if(!g.cells.has(`${x},${y}`))miss.add(`${x},${y}`);g.miss=true}
+  const cols=g.w+2,rows=g.h+2,A=g.cells.size;const svg=s('svg',{viewBox:`0 0 ${cols*C} ${rows*C}`,id:'areaSvg'});api.stage.append(svg);const lay=s('g');gridLines(lay,cols,rows,C);svg.append(lay);
   const sh=s('g',{transform:`translate(${C} ${C})`});svg.append(sh);let count=0;
+  miss.forEach(k=>{const[x,y]=k.split(',').map(Number);sh.append(s('rect',{x:x*C+.6,y:y*C+.6,width:C-1.2,height:C-1.2,rx:1,fill:'#fff',stroke:'#F43F5E','stroke-width':.6,'stroke-dasharray':'1.6 1.2','pointer-events':'none'}))});
   g.cells.forEach(k=>{const[x,y]=k.split(',').map(Number);const r=s('rect',{x:x*C,y:y*C,width:C,height:C,fill:'#86EFAC',stroke:'#166534','stroke-width':.6,class:'hit'});sh.append(r);let done=false;r.addEventListener('pointerdown',e=>{e.preventDefault();if(run.solved||done)return;done=true;count++;r.setAttribute('fill','#22C55E');sh.append(s('text',{x:x*C+C/2,y:y*C+C/2+1.8,'text-anchor':'middle','font-size':5,'font-weight':700,fill:'#fff','pointer-events':'none',class:'popin'},count));sfx.tap()})});
-  api.ask('What is the area?','Each square is 1 square unit. Tap the squares to count them, then type your answer.');
-  keypad(v=>{if(v===A){const c=centerOf($('#kpDisplay'));api.good(g.rect?`${g.h} rows of ${g.w} = ${A} square units.`:`The area is ${A} square units.`,c.x,c.y);return true}api.bad(api.tries===0?(g.rect?'Not quite! Tip: count the squares in one row, then count the rows.':'Not quite! Tap each square once to count it.'):`You have counted ${count} squares so far. Count every square inside the shape!`);return false},'sq. units');run.dbg={answer:A};return}
- if(lvl===1){const cols=8,rows=6,mode=pick(['cover','build']);let target=null,N=0;
+  const M=miss.size;
+  if(lvl===0)api.ask('What is the area?','Each square is 1 square unit. Count one row, then count the rows. Tap squares to count if it helps.');
+  else if(g.miss)api.ask('What is the area?',`Some squares are missing (the dashed ones). Tip: find the area of the whole rectangle, then take away the missing squares.`);
+  else api.ask('What is the area?','Each square is 1 square unit. Tap each square once to count it.');
+  keypad(v=>{if(v===A){const c=centerOf($('#kpDisplay'));api.good(lvl===0?`${g.h} rows of ${g.w} = ${g.h} × ${g.w} = ${A} square units.`:g.miss?`The whole rectangle is ${g.h} × ${g.w} = ${g.w*g.h}. Take away ${M} missing: ${g.w*g.h} − ${M} = ${A} square units.`:`The area is ${A} square units.`,c.x,c.y);return true}
+   api.bad(api.tries===0?(lvl===0?'Not quite! Count the squares in one row, then count the rows. Rows × squares in a row = area.':g.miss?`Not quite! How many squares would the whole rectangle have? Then subtract the ${M} dashed missing square${M>1?'s':''}.`:'Not quite! Tap each square once to count it.'):(lvl===0?`There are ${g.h} rows with ${g.w} squares in each row. ${g.h} × ${g.w} = ?`:g.miss?`The whole rectangle is ${g.h} × ${g.w} = ${g.w*g.h}. Now take away ${M}.`:`You have counted ${count} squares so far. Count every square inside the shape!`));return false},'sq. units');run.dbg={answer:A};return}
+ if(lvl===2){const cols=8,rows=6,mode=pick(['cover','build']);let target=null,N=0;
   if(mode==='cover'){let g;do{g=skyline(rnd(3,5),rnd(2,4))}while(g.cells.size<4);target=new Set();g.cells.forEach(k=>{const[x,y]=k.split(',').map(Number);target.add(`${x+1},${y+1}`)})}else N=rnd(5,12);
-  const svg=s('svg',{viewBox:`-3 -3 ${cols*C+30} ${rows*C+6}`,id:'areaSvg'});api.stage.append(svg);const lay=s('g');gridLines(lay,cols,rows,C,'#D1D5DB',.5);svg.append(lay);
+  const svg=s('svg',{viewBox:`-3 -3 ${cols*C+6} ${rows*C+6}`,id:'areaSvg'});api.stage.append(svg);const lay=s('g');gridLines(lay,cols,rows,C,'#D1D5DB',.5);svg.append(lay);
   if(target){const tg=s('g');target.forEach(k=>{const[x,y]=k.split(',').map(Number);tg.append(s('rect',{x:x*C,y:y*C,width:C,height:C,fill:'#F0FDF4'}))});boundary(target).forEach(e=>tg.append(s('line',{x1:e.x1*C,y1:e.y1*C,x2:e.x2*C,y2:e.y2*C,stroke:'#16A34A','stroke-width':1.2,'stroke-dasharray':'2 1.4','stroke-linecap':'round'})));svg.append(tg)}
-  const tileG=s('g');svg.append(tileG);const TX=cols*C+8,TY=6;
-  svg.append(s('rect',{x:TX-3,y:TY-3,width:20,height:30,rx:3,fill:'#F5F3FF',stroke:'#C4B5FD','stroke-width':.6}),s('rect',{x:TX+.5,y:TY,width:13,height:13,rx:1.5,fill:'#4ADE80',stroke:'#166534','stroke-width':.8,id:'trayTile',class:'pulse'}),s('text',{x:TX+7,y:TY+21,'text-anchor':'middle','font-size':4.2,fill:'#4B5563','font-weight':600},'drag me'));
-  const filled=new Map();let locked=false;const counter=h('div',{class:'counter',id:'counter'});api.controls.append(counter);
+  const tileG=s('g');svg.append(tileG);
+  const filled=new Map();let locked=false;api.controls.classList.add('tilebar');const counter=h('div',{class:'counter',id:'counter'});api.controls.append(counter);
   const updC=()=>{counter.textContent=mode==='cover'?`Tiles placed: ${filled.size}`:`Tiles placed: ${filled.size} (goal: ${N})`};updC();
   const cellAt=p=>{const x=Math.floor(p[0]/C),y=Math.floor(p[1]/C);return x>=0&&x<cols&&y>=0&&y<rows?`${x},${y}`:null};
   let warned=false;function apply(k,m){if(!k||locked)return;if(m==='fill'){if(filled.has(k))return;if(target&&!target.has(k)){if(!warned){api.hint('Oops! That square is outside the dashed outline. Keep the tiles inside!');warned=true}return}const[x,y]=k.split(',').map(Number);const r=s('rect',{x:x*C+.4,y:y*C+.4,width:C-.8,height:C-.8,rx:1,fill:'#4ADE80',stroke:'#166534','stroke-width':.6,class:'popin'});tileG.append(r);filled.set(k,r);sfx.tap()}else{if(!filled.has(k))return;filled.get(k).remove();filled.delete(k);sfx.tap()}updC();changed()}
   function changed(){if(mode==='cover'&&target&&[...target].every(k=>filled.has(k))&&!locked){locked=true;const c=centerOf(svg);confetti(c.x,c.y,25,.8);sfx.bit();say('You covered the whole shape! Now: how many square units is the area?','happy');api.ask('How many square units is the area?','Count the tiles you used.');keypad(v=>{if(v===target.size){const cc=centerOf($('#kpDisplay'));api.good(`The area is ${target.size} square units.`,cc.x,cc.y);return true}api.bad('Count the green tiles one by one. Each tile is 1 square unit.');return false},'sq. units')}}
-  let mode2=null,ghost=null,pid=null;
+  let mode2=null,pid=null;
   svg.addEventListener('pointerdown',e=>{if(run.solved||locked)return;e.preventDefault();const p=svgPt(svg,e);pid=e.pointerId;try{svg.setPointerCapture(pid)}catch(_){}
-   if(p[0]>=TX-3&&p[0]<=TX+17&&p[1]>=TY-3&&p[1]<=TY+27){mode2='ghost';ghost=s('rect',{x:p[0]-C/2,y:p[1]-C/2,width:C,height:C,rx:1,fill:'#4ADE80','fill-opacity':.8,stroke:'#166534','stroke-width':.6,'pointer-events':'none'});svg.append(ghost);sfx.tap();return}
    const k=cellAt(p);if(!k)return;mode2=filled.has(k)?'erase':'fill';warned=false;apply(k,mode2)});
-  svg.addEventListener('pointermove',e=>{if(!mode2||e.pointerId!==pid)return;e.preventDefault();const p=svgPt(svg,e);if(mode2==='ghost'){ghost.setAttribute('x',p[0]-C/2);ghost.setAttribute('y',p[1]-C/2)}else apply(cellAt(p),mode2)});
-  const end=e=>{if(!mode2)return;if(mode2==='ghost'){const p=svgPt(svg,e);ghost.remove();ghost=null;warned=false;const k=cellAt(p);if(k)apply(k,'fill')}mode2=null};svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',()=>{if(ghost)ghost.remove();ghost=null;mode2=null});
-  if(mode==='cover')api.ask('Cover the shape with square tiles!','Drag tiles from the tray (or tap and slide on the squares) to fill the dashed outline. Tap a tile to remove it.');
-  else{api.ask(`Build a shape with an area of ${N} square units!`,'Drag tiles onto the grid, or tap and slide. Every tile must touch another tile along a side.');
-   const clr=h('button',{class:'btn'},'Clear');clr.onclick=()=>{if(run.solved)return;filled.forEach(r=>r.remove());filled.clear();updC()};
+  svg.addEventListener('pointermove',e=>{if(!mode2||e.pointerId!==pid)return;e.preventDefault();const p=svgPt(svg,e);apply(cellAt(p),mode2)});
+  const end=()=>{mode2=null};svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
+  if(mode==='cover')api.ask('Cover the shape with square tiles!','Tap the squares inside the dashed outline to place tiles (or slide your finger across). Tap a tile again to remove it.');
+  else{api.ask(`Build a shape with an area of ${N} square units!`,'Tap squares on the grid to place tiles (or slide your finger). Every tile must touch another tile along a side.');
+   const clr=h('button',{class:'btn clearbtn'},'Clear');clr.onclick=()=>{if(run.solved)return;filled.forEach(r=>r.remove());filled.clear();updC()};
    const chk=h('button',{class:'btn primary',id:'checkBtn',style:'flex:1'},'Check ✓');chk.onclick=()=>{if(run.solved)return;const cs=new Set(filled.keys());const c=centerOf(chk);if(cs.size!==N)api.bad(`You have ${cs.size} tile${cs.size===1?'':'s'}. You need exactly ${N}. ${cs.size<N?'Add':'Take away'} ${Math.abs(N-cs.size)}.`);else if(!connected(cs))api.bad('Make sure every tile touches another tile along a side, so it is one shape.');else api.good(`Your shape has an area of ${N} square units, and its perimeter is ${boundary(cs).length} units.`,c.x,c.y)};api.controls.append(clr,chk)}
-  run.dbg={mode,N,target:target?[...target]:null,cell:(k)=>{const[x,y]=k.split(',').map(Number);return clientOf(svg,[x*C+C/2,y*C+C/2])},tray:()=>clientOf(svg,[TX+7,TY+6])};return}
+  run.dbg={mode,N,target:target?[...target]:null,cell:(k)=>{const[x,y]=k.split(',').map(Number);return clientOf(svg,[x*C+C/2,y*C+C/2])}};return}
  // level 3: rectangle stretch
  const cols=10,rows=7;let tP,tA,mode=pick(['P','A']);
  const fits=(w,hh)=>w>=1&&w<=cols&&hh>=1&&hh<=rows;
@@ -1819,7 +1833,7 @@ function areaRound(lvl,api){const C=10;
  let w=2,hh=2;do{w=rnd(1,6);hh=rnd(1,5)}while(2*(w+hh)===tP&&w*hh===tA);
  const svg=s('svg',{viewBox:`-8 -6 ${cols*C+14} ${rows*C+16}`,id:'rectSvg'});api.stage.append(svg);const lay=s('g');gridLines(lay,cols,rows,C,'#D1D5DB',.5);svg.append(lay);const rg=s('g');svg.append(rg);
  const hd=s('g',{id:'rectHandle'},s('circle',{r:8,fill:'transparent'}),s('circle',{r:4,fill:'#E11D48',stroke:'#fff','stroke-width':1.4,class:'pulse'}));svg.append(hd);
- const ro=h('div',{class:'readout',id:'readout'});api.controls.append(ro);
+ const ro=h('div',{class:'readout',id:'readout'});api.controls.classList.add('tilebar');api.controls.append(ro);
  function draw(){rg.innerHTML='';const y0=rows*C-hh*C;for(let x=0;x<w;x++)for(let y=0;y<hh;y++)rg.append(s('rect',{x:x*C+.4,y:y0+y*C+.4,width:C-.8,height:C-.8,rx:1,fill:'#86EFAC'}));rg.append(s('rect',{x:0,y:y0,width:w*C,height:hh*C,fill:'none',stroke:'#D97706','stroke-width':1.4}));rg.append(s('text',{x:w*C/2,y:rows*C+6.5,'text-anchor':'middle','font-size':5,'font-weight':700,fill:'#1E1B4B'},w),s('text',{x:-4,y:y0+hh*C/2+1.8,'text-anchor':'middle','font-size':5,'font-weight':700,fill:'#1E1B4B'},hh));hd.setAttribute('transform',`translate(${w*C} ${y0})`);
   ro.innerHTML='';ro.append(h('div',{class:'big'},`${w} × ${hh}`),h('div',{},'Perimeter',h('b',{},`${2*(w+hh)} units`)),h('div',{},'Area',h('b',{},`${w*hh} sq. units`)))}
  draw();let dr=null;const setFrom=p=>{const nw=Math.max(1,Math.min(cols,Math.round(p[0]/C))),nh=Math.max(1,Math.min(rows,Math.round((rows*C-p[1])/C)));if(nw!==w||nh!==hh){w=nw;hh=nh;sfx.tap();draw()}};
@@ -1947,7 +1961,7 @@ const ACTS=[
  {id:'quad',title:'Quad Quest',color:'#2563EB',sol:'SOL 3.MG.4',desc:'Squares, rhombuses, trapezoids & more.',levels:['Best Name','All the Names','True or False?'],tips:['Little squares show right angles. Tick marks show equal sides.','A square is a rectangle AND a rhombus too!','Think like a shape scientist!'],round:quadRound},
  {id:'combine',title:'Combine & Split',color:'#C026D3',sol:'SOL 3.MG.4',desc:'Push shapes together or cut them apart.',levels:['Push Together','Cut It Up','Pick the Cut'],tips:['Push the pieces together, then count the OUTSIDE sides to name the new shape.','A straight cut makes smaller polygons. Count the sides of each piece to name it.','Different cuts make different pieces. Tap the dashed line that makes the shapes you want!'],round:combineRound},
  {id:'peri',title:'Perimeter Path',color:'#D97706',sol:'SOL 3.MG.2',desc:'Walk all the way around the shape.',levels:['Count the Units','Add the Sides','Missing Side'],tips:['Perimeter is the distance all the way AROUND a shape.','Add up every side length.','Use the total to find the missing side!'],round:periRound},
- {id:'area',title:'Area Builder',color:'#16A34A',sol:'SOL 3.MG.2',desc:'Fill shapes with square tiles.',levels:['Count the Squares','Build with Tiles','Rectangle Stretch'],tips:['Area is how many squares cover the inside of a shape.','Drag green tiles onto the grid!','Same perimeter can have different areas. Stretch and see!'],round:areaRound},
+ {id:'area',title:'Area Builder',color:'#16A34A',sol:'SOL 3.MG.2',desc:'Fill shapes with square tiles.',levels:['Count the Squares','Missing Squares','Build with Tiles','Rectangle Stretch'],tips:['Area is how many squares cover a shape. Rows × squares in a row!','Some squares are missing! Whole rectangle, then take away.','Tap the grid to place green tiles!','Same perimeter can have different areas. Stretch and see!'],round:areaRound},
  {id:'lines',title:'Line Lab',color:'#0891B2',sol:'Challenge',group:'ch',desc:'Points, lines, line segments and rays.',levels:['What Is It?','Name It','Draw It'],tips:['Dots are endpoints (it stops). Arrows mean it keeps going forever!','Ray names start with the endpoint letter. Lines and segments can go either way.','Pick the right tool, then connect the points!'],round:linesRound},
  {id:'cross',title:'Crossing Lines',color:'#4F46E5',sol:'Challenge',group:'ch',desc:'Parallel, perpendicular and intersecting lines.',levels:['Which Kind?','Turn the Line','Lines & Angles'],tips:['Parallel lines never meet. Perpendicular lines meet at a right angle.','Drag to turn the red line!','An angle is two rays that share an endpoint, the vertex.'],round:crossRound},
  {id:'sym',title:'Mirror Magic',color:'#DB2777',sol:'Challenge',group:'ch',desc:'Find lines of symmetry by folding.',levels:['Fold Test','Find All Folds','How Many?'],tips:['A line of symmetry folds a shape into two matching halves.','Tap every fold line that works!','Count all the ways the shape can fold in half.'],round:symRound},
@@ -1962,7 +1976,7 @@ const GLV=[0,0,0,1,2,2];
 const GEOID={sort:'s_sort',tap:'s_tap',quad:'s_quad',combine:'s_combine',angle:'s_angle',lines:'s_lines',cross:'s_cross',sym:'s_sym',moves:'s_moves',peri:'a_peri',area:'a_area',blue:'a_blue'};
 const GSOL={sort:'3.MG.4',tap:'3.MG.4',quad:'3.MG.4',combine:'3.MG.4',peri:'3.MG.2',area:'3.MG.2',angle:'Gr 4 ★',lines:'Gr 4 ★',cross:'Gr 4 ★',sym:'★',moves:'★',blue:'Gr 4 ★'};
 GEO.ACTS.forEach(g=>{defAct(GEOID[g.id],{name:g.title,icon:'g_'+g.id,blurb:g.desc,sol:GSOL[g.id],challenge:g.group==='ch'?1:0,geo:g.id,levels:g.levels,tips:g.tips,
- round(A,d){const l=GLV[d];const S=A.stage;S.append=function(...n){Element.prototype.append.apply(this,n);fitStage()};try{g.round(l,A)}finally{delete S.append}if(!A.solved)A.say(`<b>${g.levels[l]}:</b> ${g.tips[l]}`)}})});
+ round(A,d){const l=(g.levels.length===4?[0,0,1,2,3,3]:GLV)[d];const S=A.stage;S.append=function(...n){Element.prototype.append.apply(this,n);fitStage()};try{g.round(l,A)}finally{delete S.append}if(!A.solved)A.say(`<b>${g.levels[l]}:</b> ${g.tips[l]}`)}})});
 UNITS.push({id:'shapes',name:'Shape Club',short:'Shapes',c:'#7C3AED',img:'shapes',when:'Nov – Dec',fcps:'Unit 4 · Geometry',sol:['3.MG.4','Gr 4 ★'],blurb:'Polygons, sides, vertices, right angles and quadrilaterals, plus lines, symmetry and moves in the Challenge Zone.',acts:['s_sort','s_tap','s_quad','s_combine','s_angle','s_lines','s_cross','s_sym','s_moves'],order:1});
 UNITS.push({id:'park',name:'Perimeter & Area Park',short:'Area Park',c:'#D97706',img:'park',when:'Mar',fcps:'Unit 8 · Measurement, Perimeter & Area',sol:['3.MG.2','Gr 4 ★'],blurb:'Walk around shapes for perimeter, tile them for area, and solve tricky composite shapes.',acts:['a_peri','a_area','a_blue'],order:6});
 
