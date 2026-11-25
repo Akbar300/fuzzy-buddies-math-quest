@@ -1009,6 +1009,7 @@ so short problems never sit in tall empty boxes. */
 .trych.big .btn{overflow-wrap:anywhere;min-width:0}
 .trych.big.xlong{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
 @media (max-width:560px){.trych.big.long .btn{font-size:24px}.trych.big.xlong .btn{font-size:22px;min-height:64px}.trych.big.xlong{grid-template-columns:1fr}}
+.steps.compact{display:flex;flex-wrap:wrap;gap:2px 14px}.steps.compact>div{font-size:.9em}.steps.compact>.cur{flex-basis:100%;order:-1;font-size:1em}.colsvg{width:100%;height:auto;display:block}
 </style>
 </head>
 <body>
@@ -1268,8 +1269,8 @@ const api={
  /* choice buttons */
  choices(list,ans,o={}){const wrap=o.into||run.controls;const btns=list.map(v=>{const b=h('button',{class:'btn'+(o.wide?' wide':''),'data-v':String(v),html:o.render?o.render(v):String(v)});b.onclick=()=>{if(run.solved||b.disabled)return;sfx.tap();if(String(v)===String(ans)){b.classList.add('good');if(o.onRight)o.onRight(v,b);else api.good(o.msg?o.msg(v):'')}else{b.classList.add('bad');b.disabled=true;api.bad(o.hint?o.hint(v):'Look again carefully.')}};return b});wrap.append(...btns);return btns},
  /* numeric keypad: steps=[{label,ans,unit,hint(v)}] */
- keypad(steps,o={}){if(!Array.isArray(steps))steps=[steps];let k=0,val='';const box=h('div',{class:'keypad'});if(run&&run.controls){run.controls.classList.add('has-keypad');run.controls.closest('.act')&&run.controls.closest('.act').classList.add('has-keypad')}const disp=h('div',{class:'kp-display',id:'kpDisp'});const inl=steps.length===1&&steps[0].label&&!/\?/.test(steps[0].label)&&!/<|=/.test(steps[0].label);const lab=!inl&&(steps.length>1||steps[0].label)?h('div',{class:'steps'}):null;
-  const render=()=>{const S=steps[k];disp.innerHTML='';disp.append(inl?h('span',{class:'kp-q'},steps[0].label+' = '):'',h('span',{},val||'?'),S&&S.unit?h('span',{class:'kp-unit'},' '+S.unit):'');if(lab){lab.innerHTML='';steps.forEach((x,i)=>lab.append(h('div',{class:i<k?'done':i===k?'cur':'',html:(i<k?'✓ ':i===k?'▶ ':'• ')+(i<k&&/\?/.test(x.label)?x.label.replace('?','<b>'+x.ans+'</b>'):x.label+(i<k?' = '+x.ans:''))})))}};
+ keypad(steps,o={}){if(!Array.isArray(steps))steps=[steps];let k=0,val='';const box=h('div',{class:'keypad'});if(run&&run.controls){run.controls.classList.add('has-keypad');run.controls.closest('.act')&&run.controls.closest('.act').classList.add('has-keypad')}const disp=h('div',{class:'kp-display',id:'kpDisp'});const inl=steps.length===1&&steps[0].label&&!/\?/.test(steps[0].label)&&!/<|=/.test(steps[0].label);const lab=!inl&&(steps.length>1||steps[0].label)?h('div',{class:'steps'+(o.compact?' compact':'')}):null;
+  const render=()=>{const S=steps[k];disp.innerHTML='';disp.append(inl?h('span',{class:'kp-q'},steps[0].label+' = '):'',h('span',{},val||'?'),S&&S.unit?h('span',{class:'kp-unit'},' '+S.unit):'');if(lab){lab.innerHTML='';steps.forEach((x,i)=>lab.append(h('div',{class:i<k?'done':i===k?'cur':'',html:(i<k?'✓ ':i===k?'▶ ':'• ')+(i>k&&x.later?x.later:i<k&&/\?/.test(x.label)?x.label.replace('?','<b>'+x.ans+'</b>'):x.label+(i<k?' = '+x.ans:''))})))}};
   const press=c=>{if(run.solved)return;sfx.tap();if(c==='del')val=val.slice(0,-1);else if(c==='ok'){if(val==='')return;const S=steps[k];const v=+val;if(v===S.ans){k++;val='';if(k>=steps.length){render();if(o.onDone)o.onDone();else api.good(o.msg||'')}else{api.bit();say(`Yes! ${/\?/.test(S.label)?S.label.replace('?',S.ans):S.label+' = '+S.ans}. Next step!`,'happy');render();o.onStep&&o.onStep(k)}}else{api.bad(S.hint?S.hint(v):'Check your work and try again.');val='';render()}return}else if(val.length<(o.max||7))val+=c;render()};
   box.append(disp);['1','2','3','4','5','6','7','8','9','del','0','ok'].forEach(c=>box.append(h('button',{class:'key'+(c==='ok'?' ok':c==='del'?' del':''),'data-k':c,onclick:()=>press(c)},c==='del'?'⌫':c==='ok'?'Check ✓':c)));
   if(lab)run.controls.append(lab);run.controls.append(box);render();run.keyHandler=e=>{if(/^[0-9]$/.test(e.key))press(e.key);else if(e.key==='Backspace')press('del');else if(e.key==='Enter')press('ok')};return{get step(){return k}}},
@@ -2481,22 +2482,59 @@ defAct('p_compare',{name:'Compare Crocs',icon:'croc',blurb:'Use >, < and = and p
   shuffle(ns).forEach(v=>{const b=h('button',{class:'btn','data-v':String(v)},commas(v));b.onclick=()=>{if(A.solved||b.disabled)return;if(v===order[picked.length]){picked.push(v);b.disabled=true;b.classList.add('good');sfx.bit();draw();if(picked.length===3)A.good(order.map(commas).join(up?' < ':' > '))}else A.bad(`Not yet. Which is the ${up?'smallest':'biggest'} number left? Compare thousands, then hundreds…`)};A.controls.append(b)});
   A.audit({kind:'order',ns,up,order});A.plan(()=>order.map(v=>({choose:v})));A.wrong(()=>[{choose:order[2]}])}});
 
-/* --- Column Climber: add & subtract --- */
-defAct('p_addsub',{name:'Column Climber',icon:'column',blurb:'Add and subtract with regrouping, then estimate.',sol:'3.CE.1 · 4.CE.1 ★',
+/* --- Column board (shared by Column Climber + Learn): one column per place, carries over the right digit --- */
+const COLP=['ones','tens','hundreds','thousands','ten thousands'],COLH=['O','T','H','Th','TTh'],COLBG=['#FFEDD5','#FCE7F3','#DBEAFE','#DCFCE7','#CFFAFE'];
+function colModel(a,b,add){const A=String(a).split('').reverse().map(Number),B=String(b).split('').reverse().map(Number);const n=Math.max(A.length,B.length);const ans=add?a+b:a-b;const AL=String(ans).length;
+ const steps=[];let carry=0;const marks={};const cap=s=>s[0].toUpperCase()+s.slice(1);
+ for(let i=0;i<n;i++){const t=A[i]||0,u=B[i]||0,nm=cap(COLP[i]);
+  if(add){const s=t+u+carry,cin=carry;const last=i===n-1;carry=s>9?1:0;
+   steps.push({i,write:last?String(s):String(s%10),carry:!last&&carry?i+1:null,label:`${nm}: ${t} + ${u}${cin?' + 1':''} = ?`,ans:s,
+    p:`${nm}: ${t} + ${u}${cin?' + 1 carried':''} = <b>${s}</b>. `+(s>9&&!last?`Write ${s%10}, carry 1 to the ${COLP[i+1]}.`:`Write ${s}.`),
+    hint:()=>`Add the ${COLP[i]} digits${cin?', plus the little 1 on top':''}.`})}
+  else{const was=marks[i]!=null?marks[i]:t;let tv=was;const reg=[];let p='';
+   if(tv<u){let j=i+1;const chain=[];while((marks[j]!=null?marks[j]:A[j])===0){chain.push(j);j++}
+    const from=marks[j]!=null?marks[j]:A[j];marks[j]=from-1;reg.push([j,from-1]);chain.forEach(q=>{marks[q]=9;reg.push([q,9])});tv+=10;marks[i]=tv;reg.push([i,tv]);
+    p=chain.length?`${nm}: ${was} − ${u}? Too small. The next place is 0, so go to the ${COLP[j]}: ${from} → ${from-1}, the 0 becomes 9, and the ${COLP[i]} get 10 more. `:`${nm}: ${was} − ${u}? Too small. Regroup 1 ${COLP[j].replace(/s$/,'')}: ${from} → ${from-1}, and ${was} becomes ${tv}. `}
+   p+=`${p?'Now ':nm+': '}${tv} − ${u} = <b>${tv-u}</b>.`;
+   steps.push({i,write:i<AL?String(tv-u):'',reg,label:tv!==was?`${nm}: regroup, then ${tv} − ${u} = ?`:`${nm}: ${tv} − ${u} = ?`,ans:tv-u,p,
+    hint:()=>tv!==was?`${was} is smaller than ${u}, so regroup: ${was} becomes ${tv}. Now ${tv} − ${u}.`:`Take ${u} away from ${tv}.`})}}
+ return{a,b,add,ans,n,len:Math.max(n,AL),steps}}
+/* SVG board. upto = steps done (-1 = none), hot = column to highlight, o.marks = show carries/regroups of ALL steps without answers */
+function colParts(m,upto=0,hot=-1,o={}){const L=m.len,CW=66,H=246,W0=62+L*CW+12,W=Math.max(W0,Math.round(H*1.55)),X0=62+(W-W0)/2,cx=i=>X0+(L-1-i)*CW+CW/2;
+ const done=m.steps.slice(0,o.marks?m.steps.length:upto);const wr={},cy={},rg={};
+ done.forEach(s=>{if(!o.marks||o.ans)if(s.write!==undefined)wr[s.i]=s.write;if(s.carry!=null)cy[s.carry]=1;(s.reg||[]).forEach(([c,v])=>rg[c]=v)});if(o.marks&&!o.ans)Object.keys(wr).forEach(k=>delete wr[k]);
+ if(o.marks&&o.ans)m.steps.forEach(s=>wr[s.i]=s.write);
+ const T=(x,y,t,sz,col,ex='')=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="${sz}" font-weight="800" fill="${col}"${ex}>${t}</text>`;
+ let s='';for(let i=0;i<L;i++){s+=`<rect x="${cx(i)-CW/2+3}" y="4" width="${CW-6}" height="${H-8}" rx="12" fill="${COLBG[i]}"${i===hot?' stroke="#F59E0B" stroke-width="5"':''}/>`+T(cx(i),24,COLH[i],16,'#64748B')}
+ const dg=(n,y,i0)=>String(n).split('').reverse().map((c,i)=>{let out=T(cx(i),y,c,50,'#1E1B4B');if(i0&&rg[i]!=null)out+=`<path d="M${cx(i)-17} ${y-10}L${cx(i)+17} ${y-30}" stroke="#E11D48" stroke-width="4" stroke-linecap="round"/>`;return out}).join('');
+ Object.keys(cy).forEach(i=>{if(+i<L)s+=T(cx(+i),54,'1',26,'#E11D48')});
+ Object.keys(rg).forEach(i=>{s+=T(cx(+i),54,rg[i],rg[i]>9?22:26,'#E11D48')});
+ s+=dg(m.a,104,true)+dg(m.b,162)+T(cx(String(m.b).length-1)-CW+8,162,m.add?'+':'−',50,'#0891B2');
+ s+=`<line x1="${cx(L-1)-CW-12}" y1="180" x2="${cx(0)+CW/2}" y2="180" stroke="#1E1B4B" stroke-width="5" stroke-linecap="round"/>`;
+ Object.keys(wr).forEach(i=>{const w=wr[i];if(w==='')return;String(w).split('').reverse().forEach((c,q)=>s+=T(cx(+i+q),232,c,50,'#7C3AED'))});
+ return[`0 0 ${W} ${H}`,s]}
+const colSVG=(...x)=>{const[vb,s]=colParts(...x);return`<svg viewBox="${vb}" class="colsvg">${s}</svg>`};
+
+/* --- Column Climber: add & subtract, one column at a time --- */
+defAct('p_addsub',{name:'Column Climber',icon:'column',blurb:'Add and subtract with regrouping, one column at a time.',sol:'3.CE.1 · 4.CE.1 ★',
  round(A,d){const add=Math.random()<.5;let a,b;
-  const gen=()=>{if(d===1){a=rnd(21,88);b=add?rnd(11,99-a<11?11:99-a):rnd(11,a-10);if(add&&(a%10)+(b%10)>9)b-=(a%10+b%10-9);if(!add&&(b%10)>(a%10))b-=(b%10-a%10)}else if(d<=4){a=rnd(150,899);b=add?rnd(110,999-a<110?110:999-a):rnd(110,a-20)}else{a=rnd(1500,7999);b=add?rnd(1100,9999-a):rnd(1100,a-100)}};gen();if(add&&a+b>(d>=5?9999:999)){b=(d>=5?9999:999)-a}
-  const ans=add?a+b:a-b;const op=add?'+':'−';const ctx=pick(add?[['stickers','got'],['pages','read'],['shells','found']]:[['tickets','spent'],['stickers','gave away'],['seeds','planted']]);
-  const len=Math.max(String(a).length,String(b).length)+(add?1:0);const svg=A.svg('0 0 470 330');const colX=i=>440-(i+.5)*70;
-  const show=reveal=>{let s='';for(let i=0;i<len;i++)s+=`<rect x="${colX(i)-32}" y="10" width="64" height="300" rx="12" fill="${['#FFEDD5','#FCE7F3','#DBEAFE','#DCFCE7','#CFFAFE'][i]}"/>`;
-   const dig=(n,y,col='#1E1B4B')=>String(n).split('').reverse().map((c,i)=>`<text x="${colX(i)}" y="${y}" text-anchor="middle" font-size="50" font-weight="700" fill="${col}">${c}</text>`).join('');
-   s+=dig(a,110)+dig(b,180)+`<text x="40" y="180" text-anchor="middle" font-size="50" font-weight="700" fill="#0891B2">${op}</text><line x1="20" y1="200" x2="460" y2="200" stroke="#1E1B4B" stroke-width="5"/>`;
-   if(reveal){const A2=String(a).split('').reverse().map(Number),B2=String(b).split('').reverse().map(Number);let carry=0;for(let i=0;i<len;i++){const x=(A2[i]||0),y=(B2[i]||0);if(add){const t=x+y+carry;carry=t>9?1:0;if(carry&&i+1<len)s+=`<text x="${colX(i+1)}" y="52" text-anchor="middle" font-size="26" font-weight="700" fill="#E11D48">1</text>`}else{const xx=x-carry;if(xx<y&&i+1<len){s+=`<text x="${colX(i)+20}" y="60" text-anchor="middle" font-size="22" font-weight="700" fill="#E11D48">+10</text>`;carry=1}else carry=0}}}
-   svg.innerHTML=s};show(false);
-  A.controls.append(h('button',{class:'btn wide',id:'regBtn',onclick:()=>{show(true);A.hint(add?'Red 1s show where 10 ones make a ten (or 10 tens make a hundred).':'Red +10 shows where you trade one from the next place.')}},'🔍 Show regrouping'.replace('🔍 ','')));
-  const steps=[];if(d===4){const r=v=>Math.round(v/100)*100;steps.push({label:`Estimate: ${commas(r(a))} ${op} ${commas(r(b))}`,ans:add?r(a)+r(b):r(a)-r(b),hint:()=>`Round each number to the nearest hundred first.`})}
-  steps.push({label:`${commas(a)} ${op} ${commas(b)}`,ans,hint:v=>Math.abs(v-ans)%10===0||Math.abs(v-ans)%100===0?'Close! Check your regrouping — tap “Show regrouping”.':'Start with the ones column, then tens, then hundreds.'});
-  A.ask(d>=4?`Maya had ${commas(a)} ${ctx[0]}. She ${ctx[1]} ${commas(b)} ${add?'more':''}. How many now?`:`Solve ${commas(a)} ${op} ${commas(b)}`,d===4?'First estimate by rounding to the nearest hundred, then find the exact answer.':'Work from right to left: ones, tens, hundreds.');
-  A.keypad(steps,{msg:`${commas(a)} ${op} ${commas(b)} = ${commas(ans)}`});A.audit({kind:'addsub',a,b,add,ans,est:d===4?steps[0].ans:null});A.plan(()=>steps.map(x=>({key:x.ans})));A.wrong(()=>[{click:'#regBtn'},{key:steps[0].ans+10}])}});
+  if(d===1){a=rnd(21,88);b=add?rnd(11,Math.max(11,99-a)):rnd(11,a-10);if(add&&(a%10)+(b%10)>9)b-=(a%10+b%10-9);if(!add&&(b%10)>(a%10))b-=(b%10-a%10)}
+  else if(d<=4){do{a=rnd(250,899);b=add?rnd(120,Math.max(120,999-a)):rnd(110,a-40);if(d===3&&!add&&Math.random()<.5){a=Math.floor(a/100)*100+rnd(1,9);b=rnd(112,Math.floor(a/100)*100-50)}}
+   while((add?a+b>999:b>=a)||(d>=2&&colModel(a,b,add).steps.every(s=>!(s.carry!=null||(s.reg||[]).length))))}
+  else{a=rnd(1500,7999);b=add?rnd(1100,9999-a):rnd(1100,a-100)}
+  const m=colModel(a,b,add),op=add?'+':'−',ans=m.ans;const guided=d<=3;
+  const [vb]=colParts(m);const svg=A.svg(vb);const draw=(k,hot,o)=>{svg.innerHTML=colParts(m,k,hot,o)[1]};draw(0,guided?0:-1);
+  let steps;
+  if(guided){steps=m.steps.map(s=>({label:s.label,later:s.label.split(':')[0],ans:s.ans,hint:s.hint}));
+   A.ask(`${a} ${op} ${b}`,'One column at a time, ones first.');
+   A.keypad(steps,{compact:1,onStep:k=>{draw(k,k);const s=m.steps[k-1];say(s.p,'happy')},onDone:()=>{draw(m.steps.length,-1);A.good(`${a} ${op} ${b} = ${ans}`)}})}
+  else{const ctx=pick(add?[['stickers','got'],['pages','read'],['shells','found']]:[['tickets','spent'],['stickers','gave away'],['seeds','planted']]);
+   A.controls.append(h('button',{class:'btn wide',id:'regBtn',onclick:()=>{draw(0,-1,{marks:true});A.hint(add?'Red 1s show where 10 ones make a ten (or 10 tens make a hundred).':'Red numbers show where you regrouped: the crossed-out digit gave 1 to the place on its right.')}},'Show regrouping'));
+   steps=[];if(d===4){const r=v=>Math.round(v/100)*100;steps.push({label:`Estimate: ${r(a)} ${op} ${r(b)}`,ans:add?r(a)+r(b):r(a)-r(b),hint:()=>'Round each number to the nearest hundred first.'})}
+   steps.push({label:`${commas(a)} ${op} ${commas(b)}`,ans,hint:v=>Math.abs(v-ans)%10===0?'Close! Check your regrouping: tap “Show regrouping”.':'Start with the ones column, then tens, then hundreds.'});
+   A.ask(d===4?`Maya had ${commas(a)} ${ctx[0]}. She ${ctx[1]} ${commas(b)} ${add?'more':''}. How many now?`:`Solve ${commas(a)} ${op} ${commas(b)}`,d===4?'First estimate by rounding to the nearest hundred, then find the exact answer.':'Work from right to left: ones, tens, hundreds, thousands.');
+   A.keypad(steps,{onDone:()=>{draw(0,-1,{marks:true,ans:true});A.good(`${commas(a)} ${op} ${commas(b)} = ${commas(ans)}`)}})}
+  A.audit({kind:'addsub',a,b,add,ans,est:d===4?steps[0].ans:null});A.plan(()=>steps.map(x=>({key:x.ans})));A.wrong(()=>[{key:steps[0].ans+10}])}});
 
 UNITS.push({id:'mountain',name:'Number Mountain',short:'Mountain',c:'#0891B2',img:'mountain',when:'Jan – Feb',fcps:'Unit 7 · Place Value, Addition & Subtraction Part 2',sol:['3.NS.1','3.NS.2','3.CE.1','4.NS.1 ★','4.CE.1 ★'],blurb:'Place value to 6 digits (9 in the Challenge Zone), compare, round, add and subtract.',acts:['p_blocks','p_value','p_round','p_compare','p_addsub']});
 LEARN.mountain=[
@@ -2504,7 +2542,7 @@ LEARN.mountain=[
  {t:'Base-ten blocks',p:['1 cube = 1,000 · 1 flat = 100 · 1 rod = 10 · 1 unit = 1','You can trade! 1 hundred = 10 tens, so: · 256 = 2 hundreds 5 tens 6 ones · = 1 hundred 15 tens 6 ones · = 25 tens 6 ones'],art:()=>`<svg viewBox="0 0 600 220"><g transform="translate(20 30)">${blockStr('th',0,0,.8)}</g><g transform="translate(180 50)">${blockStr('h',0,0,1)}</g><g transform="translate(330 50)">${blockStr('t',0,0,1)}</g><g transform="translate(380 150)">${blockStr('o',0,0,1.6)}</g><g font-size="22" font-weight="700" text-anchor="middle"><text x="90" y="210" fill="#16A34A">1,000</text><text x="240" y="210" fill="#2563EB">100</text><text x="336" y="210" fill="#DB2777">10</text><text x="390" y="210" fill="#EA580C">1</text></g></svg>`},
  {t:'Three ways to write a number',p:['<b>Standard form:</b> 4,086','<b>Expanded form:</b> 4,000 + 80 + 6','<b>Word form:</b> four thousand, eighty-six'],tip:'A zero holds a place: 4,086 has 0 hundreds.',art:()=>`<svg viewBox="0 0 500 240"><g font-weight="700" text-anchor="middle"><text x="250" y="60" font-size="54" fill="#0E7490">4,086</text><text x="250" y="130" font-size="32" fill="#7C3AED">4,000 + 80 + 6</text><text x="250" y="200" font-size="26" fill="#DB2777">four thousand, eighty-six</text></g></svg>`},
  {t:'Comparing and rounding',p:['To compare, line up the places and start at the <b>biggest</b> place: 4,732 &gt; 4,723 because 3 tens &gt; 2 tens.','To round 347 to the nearest ten, find the two tens it is between (340 and 350). 347 is closer to 350. If the digit is 5 or more, round <b>up</b>.'],art:()=>`<svg viewBox="0 0 640 240"><path d="M60 200Q320 -40 580 200Z" fill="#BBF7D0" stroke="#16A34A" stroke-width="4"/><line x1="40" y1="200" x2="600" y2="200" stroke="#1E1B4B" stroke-width="4"/><text x="60" y="235" text-anchor="middle" font-size="26" font-weight="700" fill="#0E7490">340</text><text x="580" y="235" text-anchor="middle" font-size="26" font-weight="700" fill="#0E7490">350</text><circle cx="424" cy="118" r="18" fill="#F97316" stroke="#fff" stroke-width="4"/><text x="424" y="88" text-anchor="middle" font-size="22" font-weight="700" fill="#C2410C">347</text><path d="M450 130q60 20 100 60" stroke="#F97316" stroke-width="4" fill="none" stroke-dasharray="6 5"/></svg>`},
- {t:'Regrouping',p:['Adding: when a column makes 10 or more, trade 10 ones for 1 ten and carry it.','Subtracting: when the top digit is too small, borrow 1 from the next place — it becomes 10 more here.'],tip:'Estimate first! 398 + 215 is about 400 + 200 = 600.',art:()=>`<svg viewBox="0 0 360 300"><g font-size="50" font-weight="700" text-anchor="middle"><text x="140" y="110">3</text><text x="210" y="110">9</text><text x="280" y="110">8</text><text x="70" y="180" fill="#0891B2">+</text><text x="140" y="180">2</text><text x="210" y="180">1</text><text x="280" y="180">5</text><text x="140" y="270">6</text><text x="210" y="270">1</text><text x="280" y="270">3</text></g><line x1="50" y1="200" x2="320" y2="200" stroke="#1E1B4B" stroke-width="5"/><g font-size="26" font-weight="700" fill="#E11D48" text-anchor="middle"><text x="140" y="45">1</text><text x="210" y="45">1</text></g></svg>`}
+ {t:'Regrouping',p:['Adding: when a column makes 10 or more, trade 10 ones for 1 ten and carry it.','Subtracting: when the top digit is too small, borrow 1 from the next place — it becomes 10 more here.'],tip:'Estimate first! 398 + 215 is about 400 + 200 = 600.',art:()=>colSVG(colModel(398,215,true),3)}
 ];
 QUIZ.mountain=[
  ()=>{const N=rnd(100000,999999),s0=String(N);let pl=rnd(1,5);while(s0[5-pl]==='0')pl--;const dg=+s0[5-pl];return{q:`What is the value of the digit ${dg} in ${commas(N)}? (the ${dg} in the ${PLACES[pl]} place)`,ch:shuffle([...new Set([dg*10**pl,dg*10**(pl-1),dg*10**(pl+1),dg])]).map(String),ans:String(dg*10**pl),render:v=>commas(+v),why:`${dg} ${PLACES[pl]} = ${commas(dg*10**pl)}.`}},
@@ -3109,8 +3147,12 @@ LEARN.bakery.push(
   {kind:'example',t:'Compare 3,482 and 3,428',acts:['p_compare'],intro:'Which is greater? Compare place by place, starting from the left.',art:k=>SV('0 0 520 220',TX(260,70,'3,4<tspan fill="'+(k>=1?'#DB2777':'#1E1B4B')+'">8</tspan>2',48)+TX(260,150,'3,4<tspan fill="'+(k>=1?'#DB2777':'#1E1B4B')+'">2</tspan>8',48)+(k>=2?TX(260,210,'3,482 > 3,428',34,'#16A34A'):'')),
    steps:[{p:'Thousands: 3 and 3 are the same. Hundreds: 4 and 4 are the same.'},{p:'Tens: 8 tens vs 2 tens. 8 is bigger!'},{p:'So <b>3,482 &gt; 3,428</b>. The croc mouth eats the bigger number.'}],ans:'3,482 > 3,428'},
   4,
-  {kind:'example',t:'Add with regrouping: 368 + 457',acts:['p_addsub'],intro:'Line up the places and start with the ones.',art:k=>SV('0 0 400 300',(k>=1?TX(225,40,'1',24,'#DB2777'):'')+(k>=2?TX(165,40,'1',24,'#DB2777'):'')+TX(250,90,'3 6 8',40)+TX(250,150,'+ 4 5 7',40)+`<path d="M100 170H300" stroke="#1E1B4B" stroke-width="4"/>`+TX(250,230,k>=3?'8 2 5':k>=2?'_ 2 5':k>=1?'_ _ 5':'',40,'#7C3AED')),
-   steps:[{p:'Ready: hundreds under hundreds, tens under tens, ones under ones.'},{p:'Ones: 8 + 7 = 15. Write 5, regroup 1 ten.'},{p:'Tens: 6 + 5 + 1 = 12. Write 2, regroup 1 hundred.'},{p:'Hundreds: 3 + 4 + 1 = 8. Answer: <b>825</b>.'}],ans:'825'},
+  {kind:'example',t:'Add with regrouping: 368 + 457',acts:['p_addsub'],intro:'Line up the places and start with the ones.',art:k=>colSVG(colModel(368,457,true),k,k?k-1:-1),
+   steps:[{p:'Ready: hundreds under hundreds, tens under tens, ones under ones.'},...colModel(368,457,true).steps.map(x=>({p:x.p}))],ans:'825'},
+  {kind:'example',t:'Subtract with regrouping: 642 − 278',acts:['p_addsub'],intro:'Start with the ones. If the top digit is too small, regroup from the next place.',art:k=>colSVG(colModel(642,278,false),k,k?k-1:-1),
+   steps:[{p:'Ready: line up the places. The bigger number goes on top.'},...colModel(642,278,false).steps.map(x=>({p:x.p}))],ans:'364'},
+  {kind:'example',t:'Regroup across a zero: 503 − 178',acts:['p_addsub'],intro:'The tens place has 0, so it cannot give. Go one more place to the left.',art:k=>colSVG(colModel(503,178,false),k,k?k-1:-1),
+   steps:[{p:'Ready: 503 on top, 178 underneath.'},...colModel(503,178,false).steps.map(x=>({p:x.p}))],ans:'325'},
   {kind:'try',t:'Try it: rounding',q:'Round 650 to the nearest hundred.',ch:['600','650','700','1,000'],ans:'700',why:'The tens digit is 5. Five or more rounds up, so 650 → 700.',hint:'Look at the tens digit.',acts:['p_round']},
   {kind:'oops',t:'Place value slips',items:[
    {wrong:'"The 5 in 503 is worth 5."',right:'It is in the hundreds place: 500.'},
