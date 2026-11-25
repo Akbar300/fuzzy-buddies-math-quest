@@ -2871,8 +2871,8 @@ defAct('e_equal',{name:'Equal or Not?',icon:'neq',blurb:'Decide if two expressio
   A.audit({kind:'eq',Ls,Rs,truth,lv:val(Ls),rv:val(Rs)});A.plan(()=>[{choose:truth}]);A.wrong(()=>[{choose:truth==='='?'≠':'='}])}});
 
 defAct('e_machine',{name:'Pattern Machine',icon:'machine',blurb:'Input → rule → output. Crack the code!',sol:'3.PFA.1 · ×rules ★',
- round(A,d){const op=d<=2?pick(['+','−']):d===3?pick(['+','−','+']):pick(['+','−','×']);const k=op==='×'?rnd(2,6):rnd(2,d<=2?10:25);const f=x=>op==='+'?x+k:op==='−'?x-k:x*k;
-  const ins=[];while(ins.length<4){const v=op==='−'?k+rnd(1,40):op==='×'?rnd(1,10):rnd(1,50);if(!ins.includes(v))ins.push(v)}const miss=ins[3];
+ round(A,d){const op=d<=2?pick(['+','−']):d===3?pick(['+','−','+']):pick(['+','−','×']);const k=op==='×'?rnd(2,5):rnd(2,d<=2?10:12);const f=x=>op==='+'?x+k:op==='−'?x-k:x*k;
+  const step=op==='×'?1:d<=2?1:d===3?pick([1,2]):pick([1,2,5,10]);const st=op==='×'?rnd(1,6):op==='−'?k+rnd(0,20):rnd(1,30);const ins=[0,1,2,3].map(i=>st+i*step);const miss=ins[3];
   const svg=A.svg('0 0 720 360');let fed=false;
   const draw=()=>{let s=`<rect x="20" y="20" width="250" height="${4*56+50}" rx="16" fill="#fff" stroke="#0D9488" stroke-width="3"/><text x="82" y="54" text-anchor="middle" font-size="22" font-weight="700" fill="#0F766E">In</text><text x="208" y="54" text-anchor="middle" font-size="22" font-weight="700" fill="#0F766E">Out</text><line x1="145" y1="30" x2="145" y2="${4*56+60}" stroke="#99F6E4" stroke-width="3"/>`;
    ins.forEach((x,i)=>{s+=`<text x="82" y="${100+i*56}" text-anchor="middle" font-size="30" font-weight="700">${x}</text><text x="208" y="${100+i*56}" text-anchor="middle" font-size="30" font-weight="700" fill="${i===3?'#E11D48':'#1E1B4B'}">${i===3?'?':f(x)}</text>`});
