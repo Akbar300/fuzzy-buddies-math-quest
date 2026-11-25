@@ -971,6 +971,29 @@ so short problems never sit in tall empty boxes. */
 .slide.try .trych .btn svg{width:clamp(120px,12vw,200px)}
 @media (max-width:560px){.trych.big{grid-template-columns:repeat(2,minmax(0,1fr))}.trych.big .btn{font-size:34px;min-height:96px}}
 @media (min-width:900px){.learnwrap .slide.try.noart{min-height:min(62vh,620px);align-content:center}}
+
+/* ---- Nov 25: phones: compact 4-column keypad, small scene picture ---- */
+@media (max-width:560px){
+ .act .keypad:not(.gkeys){grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px}
+ .act .keypad:not(.gkeys) .kp-display{grid-column:1/-1;order:0;min-height:46px}
+ .act .keypad:not(.gkeys) .key{min-height:46px;font-size:22px;padding:0}
+ .act .keypad:not(.gkeys) .key[data-k="1"]{order:1}.act .keypad:not(.gkeys) .key[data-k="2"]{order:2}.act .keypad:not(.gkeys) .key[data-k="3"]{order:3}.act .keypad:not(.gkeys) .key[data-k="del"]{order:4}
+ .act .keypad:not(.gkeys) .key[data-k="4"]{order:5}.act .keypad:not(.gkeys) .key[data-k="5"]{order:6}.act .keypad:not(.gkeys) .key[data-k="6"]{order:7}.act .keypad:not(.gkeys) .key[data-k="0"]{order:8}
+ .act .keypad:not(.gkeys) .key[data-k="7"]{order:9}.act .keypad:not(.gkeys) .key[data-k="8"]{order:10}.act .keypad:not(.gkeys) .key[data-k="9"]{order:11}.act .keypad:not(.gkeys) .key[data-k="ok"]{order:12;font-size:17px}
+ .act .prompt.hasscene .pscene{float:right;width:92px;height:62px;margin:0 0 4px 8px}
+}
+
+.kp-display .kp-q{color:var(--c);font-weight:700;margin-right:4px}
+@media (max-width:560px){
+ .act:not(.playfull) .actionbar{display:flex;align-items:center;gap:6px}
+ .act:not(.playfull) .actionbar .mascot-row{flex:1 1 auto;min-width:0}
+ .act:not(.playfull) .actionbar .abtns{flex:0 0 auto;width:auto}
+ .act:not(.playfull) .actionbar .abtns .btn{flex:0 0 auto}
+ .act .controls.has-keypad{display:flex;flex-wrap:wrap;gap:6px}
+ .act .controls.has-keypad>*{flex:1 1 100%;min-width:0}
+ .act .controls.has-keypad>.live:has(+ .btn.wide){flex:1 1 48%;font-size:17px;padding:6px 8px;display:flex;align-items:center;justify-content:center}
+ .act .controls.has-keypad>.live+.btn.wide{flex:1 1 44%;font-size:17px;min-height:48px;padding:4px 8px}
+}
 </style>
 </head>
 <body>
@@ -1230,8 +1253,8 @@ const api={
  /* choice buttons */
  choices(list,ans,o={}){const wrap=o.into||run.controls;const btns=list.map(v=>{const b=h('button',{class:'btn'+(o.wide?' wide':''),'data-v':String(v),html:o.render?o.render(v):String(v)});b.onclick=()=>{if(run.solved||b.disabled)return;sfx.tap();if(String(v)===String(ans)){b.classList.add('good');if(o.onRight)o.onRight(v,b);else api.good(o.msg?o.msg(v):'')}else{b.classList.add('bad');b.disabled=true;api.bad(o.hint?o.hint(v):'Look again carefully.')}};return b});wrap.append(...btns);return btns},
  /* numeric keypad: steps=[{label,ans,unit,hint(v)}] */
- keypad(steps,o={}){if(!Array.isArray(steps))steps=[steps];let k=0,val='';const box=h('div',{class:'keypad'});if(run&&run.controls){run.controls.classList.add('has-keypad');run.controls.closest('.act')&&run.controls.closest('.act').classList.add('has-keypad')}const disp=h('div',{class:'kp-display',id:'kpDisp'});const lab=steps.length>1||steps[0].label?h('div',{class:'steps'}):null;
-  const render=()=>{const S=steps[k];disp.innerHTML='';disp.append(h('span',{},val||'?'),S&&S.unit?h('span',{class:'kp-unit'},' '+S.unit):'');if(lab){lab.innerHTML='';steps.forEach((x,i)=>lab.append(h('div',{class:i<k?'done':i===k?'cur':'',html:(i<k?'✓ ':i===k?'▶ ':'• ')+(i<k&&/\?/.test(x.label)?x.label.replace('?','<b>'+x.ans+'</b>'):x.label+(i<k?' = '+x.ans:''))})))}};
+ keypad(steps,o={}){if(!Array.isArray(steps))steps=[steps];let k=0,val='';const box=h('div',{class:'keypad'});if(run&&run.controls){run.controls.classList.add('has-keypad');run.controls.closest('.act')&&run.controls.closest('.act').classList.add('has-keypad')}const disp=h('div',{class:'kp-display',id:'kpDisp'});const inl=steps.length===1&&steps[0].label&&!/\?/.test(steps[0].label)&&!/<|=/.test(steps[0].label);const lab=!inl&&(steps.length>1||steps[0].label)?h('div',{class:'steps'}):null;
+  const render=()=>{const S=steps[k];disp.innerHTML='';disp.append(inl?h('span',{class:'kp-q'},steps[0].label+' = '):'',h('span',{},val||'?'),S&&S.unit?h('span',{class:'kp-unit'},' '+S.unit):'');if(lab){lab.innerHTML='';steps.forEach((x,i)=>lab.append(h('div',{class:i<k?'done':i===k?'cur':'',html:(i<k?'✓ ':i===k?'▶ ':'• ')+(i<k&&/\?/.test(x.label)?x.label.replace('?','<b>'+x.ans+'</b>'):x.label+(i<k?' = '+x.ans:''))})))}};
   const press=c=>{if(run.solved)return;sfx.tap();if(c==='del')val=val.slice(0,-1);else if(c==='ok'){if(val==='')return;const S=steps[k];const v=+val;if(v===S.ans){k++;val='';if(k>=steps.length){render();if(o.onDone)o.onDone();else api.good(o.msg||'')}else{api.bit();say(`Yes! ${/\?/.test(S.label)?S.label.replace('?',S.ans):S.label+' = '+S.ans}. Next step!`,'happy');render();o.onStep&&o.onStep(k)}}else{api.bad(S.hint?S.hint(v):'Check your work and try again.');val='';render()}return}else if(val.length<(o.max||7))val+=c;render()};
   box.append(disp);['1','2','3','4','5','6','7','8','9','del','0','ok'].forEach(c=>box.append(h('button',{class:'key'+(c==='ok'?' ok':c==='del'?' del':''),'data-k':c,onclick:()=>press(c)},c==='del'?'⌫':c==='ok'?'Check ✓':c)));
   if(lab)run.controls.append(lab);run.controls.append(box);render();run.keyHandler=e=>{if(/^[0-9]$/.test(e.key))press(e.key);else if(e.key==='Backspace')press('del');else if(e.key==='Enter')press('ok')};return{get step(){return k}}},
@@ -2219,9 +2242,8 @@ defAct('m_array',{name:'Array Builder',icon:'array',blurb:'Drag the corner to bu
 defAct('m_share',{name:'Cookie Share',icon:'cookie',blurb:'Drag cookies onto plates to share equally.',sol:'3.CE.2',
  round(A,d){const g=d<=1?rnd(2,3):d===2?rnd(2,4):rnd(3,d>=5?6:5);const q=d<=2?rnd(2,4):rnd(3,d>=4?8:6);const N=g*q;const who=pick(['friends','bunnies','bears','cousins','teammates']);
   A.ask(`Share ${N} cookies equally with ${g} ${who}. How many does each get?`,'Drag cookies onto the plates (or tap “Deal 1 each”). Then type the answer.');
-  const svg=A.svg('0 0 660 460');const ck=[...Array(N)].map((_,i)=>({i,p:-1}));
-  const cols=Math.min(N,12),cr=18;const trayPos=i=>[40+(i%cols)*50+25,30+Math.floor(i/cols)*44+20];
-  const plateX=k=>660/(g)*(k+.5),PY=360;const onPlate=k=>ck.filter(c=>c.p===k);
+  const cols=Math.min(N,12),cr=18,rows=Math.ceil(N/cols),PY=rows*44+128;const svg=A.svg(`0 0 660 ${PY+88}`);const ck=[...Array(N)].map((_,i)=>({i,p:-1}));const trayPos=i=>[40+(i%cols)*50+25,30+Math.floor(i/cols)*44+20];
+  const plateX=k=>660/(g)*(k+.5);const onPlate=k=>ck.filter(c=>c.p===k);
   const platePos=(k,j)=>{const per=Math.ceil(Math.sqrt(q+2));return[plateX(k)-((Math.min(per,q)-1)*22)/2+(j%per)*22,PY-30+Math.floor(j/per)*20]};
   const draw=()=>{let s=`<rect x="20" y="8" width="620" height="${Math.ceil(N/cols)*44+30}" rx="18" fill="#FEF3C7" stroke="#F59E0B" stroke-width="3" stroke-dasharray="8 6"/>`;
    for(let k=0;k<g;k++){const n=onPlate(k).length;s+=`<g class="plate" data-p="${k}"><ellipse cx="${plateX(k)}" cy="${PY}" rx="${Math.min(62,600/g/2-6)}" ry="46" fill="#fff" stroke="#A78BFA" stroke-width="4"/><ellipse cx="${plateX(k)}" cy="${PY}" rx="${Math.min(46,600/g/2-20)}" ry="32" fill="none" stroke="#EDE9FE" stroke-width="3"/><text x="${plateX(k)}" y="${PY+72}" text-anchor="middle" font-size="24" font-weight="700" fill="#7C3AED">${n}</text></g>`}
@@ -2267,9 +2289,9 @@ defAct('m_strat',{name:'Break-Apart Studio',icon:'area',blurb:'Use properties an
    A.ask(`${a} × ${b} = ${b} × ?`,'Turn an array on its side — the total stays the same! (Commutative property)');const ch=shuffle([...new Set([a,b,a+b,a*b])]);A.choices(ch,a,{msg:()=>`${a} × ${b} = ${b} × ${a} = ${a*b}.`,hint:()=>`Swap the two factors.`});A.audit({kind:'comm',a,b,ans:a});A.plan(()=>[{choose:a}]);A.wrong(()=>[{choose:ch.find(c=>c!==a)}]);return}
   if(d===2){const b=rnd(3,9),a=pick([2,5,10]);const up=a===10?-1:1;const n=a+up;svg.innerHTML=`<g transform="translate(40 20)">${arrayStr(0,0,n,b,30,{col:i=>(up>0&&i===n-1)?'#FB923C':'#A78BFA'})}${up<0?`<g opacity=".35">${arrayStr(0,n*30,1,b,30,{col:()=>'#9CA3AF'})}</g><line x1="-6" y1="${n*30+15}" x2="${b*30+6}" y2="${n*30+15}" stroke="#E11D48" stroke-width="4"/>`:''}</g><text x="420" y="120" font-size="24" font-weight="700" fill="#5B21B6">${a} × ${b} = ${a*b}</text><text x="420" y="170" font-size="24" font-weight="700" fill="#EA580C">${up>0?'+ one more group':'− one group'}</text><text x="420" y="220" font-size="24" font-weight="700">${n} × ${b} = ?</text>`;
    A.ask(`If ${a} × ${b} = ${a*b}, what is ${n} × ${b}?`,up>0?`Add one more group of ${b}.`:`Take away one group of ${b}.`);A.keypad({label:`${n} × ${b}`,ans:n*b,hint:()=>`${a*b} ${up>0?'+':'−'} ${b} = ?`},{msg:`${a*b} ${up>0?'+':'−'} ${b} = ${n*b}`});A.audit({kind:'adjust',a,b,n,ans:n*b});A.plan(()=>[{key:n*b}]);A.wrong(()=>[{key:n*b+1}]);return}
-  let a,parts,label;if(d===3){a=rnd(3,9);const b=rnd(6,9);parts=[5,b-5];label=`${a} × ${b}`}else if(d===4){a=rnd(2,9);const t=rnd(1,9),o=rnd(1,9);parts=[t*10,o];label=`${a} × ${t*10+o}`}else{a=rnd(2,6);const hh=rnd(1,4),t=rnd(1,9),o=rnd(1,9);parts=[hh*100,t*10,o];label=`${a} × ${hh*100+t*10+o}`}
+  let a,parts,label;if(d===3){a=rnd(3,9);const b=rnd(6,9);parts=[5,b-5];label=`${a} × ${b}`}else if(d===4){a=rnd(2,5);const o=rnd(1,9);parts=[10,o];label=`${a} × ${10+o}`}else{a=rnd(2,4);let n=rnd(21,Math.floor(99/a));if(n%10===0)n++;parts=[Math.floor(n/10)*10,n%10];label=`${a} × ${n}`}/* Nov 25: Grade 3 friendly: 2-digit × small 1-digit only, no hundreds */
   const tot=parts.reduce((x,y)=>x+y,0);const W=560,H=160,y0=120;let x=50;let s=`<text x="30" y="${y0+H/2+10}" text-anchor="middle" font-size="30" font-weight="700" fill="#DB2777">${a}</text>`;const cols=['#C4B5FD','#FDE68A','#A7F3D0'];
-  parts.forEach((pp,i)=>{const w=Math.max(70,W*(d===5?[.55,.3,.15][i]:pp/tot));s+=`<rect x="${x}" y="${y0}" width="${w}" height="${H}" fill="${cols[i]}" stroke="#1E1B4B" stroke-width="3"/><text x="${x+w/2}" y="${y0-14}" text-anchor="middle" font-size="28" font-weight="700" fill="#5B21B6">${pp}</text><text x="${x+w/2}" y="${y0+H/2+10}" text-anchor="middle" font-size="22" font-weight="600" fill="#1E1B4B">${a} × ${pp}</text>`;x+=w});
+  parts.forEach((pp,i)=>{const w=Math.max(70,W*(parts.length===3?[.55,.3,.15][i]:pp/tot));s+=`<rect x="${x}" y="${y0}" width="${w}" height="${H}" fill="${cols[i]}" stroke="#1E1B4B" stroke-width="3"/><text x="${x+w/2}" y="${y0-14}" text-anchor="middle" font-size="28" font-weight="700" fill="#5B21B6">${pp}</text><text x="${x+w/2}" y="${y0+H/2+10}" text-anchor="middle" font-size="22" font-weight="600" fill="#1E1B4B">${a} × ${pp}</text>`;x+=w});
   s+=`<text x="320" y="40" text-anchor="middle" font-size="30" font-weight="700">${label} = ?</text>`;svg.innerHTML=s;
   A.ask(`Break apart ${label}`,`Multiply each part, then add the parts together.${d>=4?' (Area model)':''}`);
   const steps=parts.map(pp=>({label:`${a} × ${pp}`,ans:a*pp,hint:()=>pp>=10?`${a} × ${pp/(pp>=100?100:10)} = ${a*pp/(pp>=100?100:10)}, so ${a} × ${pp} = ${a*pp/(pp>=100?100:10)} ${pp>=100?'hundreds':'tens'}.`:`Use your facts: ${a} × ${pp}.`}));steps.push({label:parts.map(pp=>a*pp).join(' + '),ans:a*tot,hint:()=>`Add the partial products: ${parts.map(pp=>a*pp).join(' + ')}.`});
@@ -2332,27 +2354,30 @@ defAct('m_tri',{name:'Fact Family House',icon:'house',blurb:'Product in the roof
   A.plan(()=>[{drag:[`#stage .ftile[data-i="0"] circle`,tc('top')]},{drag:[`#stage .ftile[data-i="1"] circle`,tc('bl')]},{drag:[`#stage .ftile[data-i="2"] circle`,tc('br')]},{click:'#checkBtn'}]);
   A.wrong(()=>[{drag:[`#stage .ftile[data-i="1"] circle`,tc('top')]},{drag:[`#stage .ftile[data-i="0"] circle`,tc('bl')]},{drag:[`#stage .ftile[data-i="2"] circle`,tc('br')]},{click:'#checkBtn'}])}});
 
-/* Power Moves: properties + division strategies (fact recall itself is practiced in Times Table Dojo) */
-function powerFact(d){const a=rnd(3,9),b=rnd(3,9),p=a*b;const T=[
- ()=>({label:`${a} × ${b} = ${p}, so ${b} × ${a} = ?`,ans:p,tip:'Flip-it (commutative) rule: order does not change the product.'}),
- ()=>({label:`${a} × ${b} = ${a} × 5 + ${a} × ?`,ans:b-5,tip:`Break apart ${b} into 5 + ${b-5}.`,ok:b>5}),
- ()=>({label:`9 × ${b} = 10 × ${b} − ?`,ans:b,tip:'×9 is ×10 take away one group.'}),
- ()=>({label:`4 × ${b} = double (2 × ${b}) = ?`,ans:4*b,tip:'×4 is double, then double again.'}),
- ()=>({label:`${p} ÷ ${a} = ? (think ${a} × ? = ${p})`,ans:b,tip:'Divide by thinking multiplication.'}),
- ()=>({label:`${a} × 0 = ?`,ans:0,tip:'Zero groups of anything is 0.'}),
- ()=>({label:`${p} ÷ ${p} = ?`,ans:1,tip:'Any number (not 0) divided by itself is 1.'}),
- ()=>({label:`2 × ${a} × 5 = 10 × ? `,ans:a,tip:'Group 2 × 5 first to make 10 (associative rule).'}),
- ()=>({label:`${b} × ${a*10} = ?`,ans:b*a*10,tip:`${b} × ${a} = ${p}, so ${b} × ${a} tens = ${p} tens.`,lvl:3}),
- ()=>({label:`${p*2} ÷ 2 ÷ ${a} = ?`,ans:b,tip:'Halve first, then divide.',lvl:4}),
- ()=>({label:`${a} × 12 = ${a} × 10 + ${a} × ?`,ans:2,tip:'Break 12 into 10 + 2.',lvl:4}),
- ()=>({label:`${a*10*b} ÷ 10 = ?`,ans:a*b,tip:'Dividing by 10 removes a zero.',lvl:5})];
- for(let i=0;i<50;i++){const f=pick(T)();if(f.ok===false)continue;if(f.lvl&&f.lvl>d)continue;return f}return T[0]()}
-defAct('m_sprint',{name:'Power Moves',icon:'sprint',blurb:'Use the multiplication properties and division tricks: six quick puzzles, race to the finish!',sol:'3.CE.2',help:'fluency',
- round(A,d){const N=6;const facts=[];let g=0;while(facts.length<N&&g++<200){const f=powerFact(d);if(!facts.some(x=>x.label===f.label))facts.push(f)}
-  const svg=A.svg('0 0 760 240');const X=k=>70+k*(620/N);const draw=k=>{let s=`<rect x="20" y="120" width="720" height="70" rx="35" fill="#EDE9FE"/><path d="M40 155H720" stroke="#fff" stroke-width="6" stroke-dasharray="20 14"/>`;for(let i=0;i<=N;i++)s+=`<circle cx="${X(i)}" cy="155" r="${i===N?22:12}" fill="${i<k?'#A78BFA':i===N?'#F59E0B':'#fff'}" stroke="#7C3AED" stroke-width="4"/>`;s+=`<g transform="translate(${X(N)} 155)"><path d="M-6 -22V-60L22 -50L-6 -40" fill="#F472B6" stroke="#9D174D" stroke-width="3"/></g><g transform="translate(${X(k)-30} 40)">${buddySVG(guideOf(run.U)).replace('class="mascot ','class="').replace('<svg','<svg width="60" height="70"')}</g><text x="380" y="225" text-anchor="middle" font-size="22" font-weight="700" fill="#5B21B6">${k} of ${N} power moves</text>`;svg.innerHTML=s};draw(0);
-  A.ask('Power Moves!','You already know your facts. Now use the rules: flip it, break it apart, ×10, halve and double.');
-  A.keypad(facts.map(f=>({label:f.label,ans:f.ans,hint:()=>f.tip})),{onStep:k=>{draw(k);A.say('✓ '+facts[k-1].tip,'happy')},onDone:()=>{draw(N);A.good('Six power moves! You crossed the finish line!')}});
-  A.audit({kind:'power',facts});A.plan(()=>facts.map(f=>({key:f.ans})));A.wrong(()=>[{key:facts[0].ans+1}])}});
+/* Power Moves (Nov 25 rework): a Dojo-style fact race on her own weak facts.
+   No strategy tricks. Focus table = the one she knows least; misses and speed feed the Fact Gym star map. */
+function pmTables(d){return d<=1?[2,5,10]:d===2?[2,3,4,5,10]:d===3?[2,3,4,5,6,7,8,9,10]:[2,3,4,5,6,7,8,9,10]}
+function pmFocus(T){gymSt();const W=[1.5,3,1,0];let best=T[0],bs=-1;for(const n of shuffle(T.filter(x=>x!==10&&x!==2&&x!==11).concat([]))){let sc=0;for(let k=1;k<=10;k++)sc+=W[factLevel(n,k)];if(sc>bs){bs=sc;best=n}}return best}
+function pmFacts(d){gymSt();const T=pmTables(d),focus=pmFocus(T),N=d<=2?6:8,maxB=10,minB=d<=2?1:2,out=[],seen=new Set();let guard=0;
+ const W=[3,6,2,.4];
+ while(out.length<N&&guard++<400){let n,b;
+  if(Math.random()<.5){n=focus;b=rnd(minB,maxB)}else{const C=[];for(const t of T)for(let k=minB;k<=maxB;k++)C.push([t,k,W[factLevel(t,k)]]);const tot=C.reduce((x,c)=>x+c[2],0);let r=Math.random()*tot;let c=C[0];for(const x of C){r-=x[2];if(r<=0){c=x;break}}[n,b]=c}
+  const p=n*b;const r=Math.random();const kind=d>=4&&r<(d>=5?.4:.3)?'div':(d>=2&&r<(d>=5?.65:d>=4?.5:.25))?'miss':'mult';let f;
+  if(kind==='div')f={label:`${p} ÷ ${n}`,ans:b,cell:[n,b],n,nudge:`Think: ${n} × ? = ${p}.`};
+  else if(kind==='miss')f={label:`${n} × ? = ${p}`,ans:b,cell:[n,b],n,nudge:`Count by ${n}s until you reach ${p}.`};
+  else{const fl=Math.random()<.5;f={label:fl?`${b} × ${n}`:`${n} × ${b}`,ans:p,cell:[n,b],n,nudge:`Count by ${n}s, ${b} times.`}}
+  if(seen.has(f.label))continue;seen.add(f.label);out.push(f)}
+ return{facts:out,focus}}
+function pmMark(a,b,ok,ms){gymSt();[fkey(a,b),fkey(b,a)].forEach(x=>{const f=st.facts[x]||{r:0,w:0,s:0,t:9999};if(ok){f.r++;f.s++;f.t=ms;f.lw=0}else{f.w++;f.s=0;f.lw=1}st.facts[x]=f});save()}
+defAct('m_sprint',{name:'Power Moves',icon:'sprint',blurb:'Fact race! Your trickiest facts and today’s focus table. Race to the finish.',sol:'3.CE.2',help:'fluency',
+ round(A,d){const {facts,focus}=pmFacts(d);const N=facts.length;
+  const svg=A.svg('0 0 760 330');const X=k=>70+k*(620/N);const draw=k=>{let s=`<rect x="20" y="210" width="720" height="70" rx="35" fill="#EDE9FE"/><path d="M40 245H720" stroke="#fff" stroke-width="6" stroke-dasharray="20 14"/>`;for(let i=0;i<=N;i++)s+=`<circle cx="${X(i)}" cy="245" r="${i===N?22:12}" fill="${i<k?'#A78BFA':i===N?'#F59E0B':'#fff'}" stroke="#7C3AED" stroke-width="4"/>`;s+=`<g transform="translate(${X(N)} 245)"><path d="M-6 -22V-60L22 -50L-6 -40" fill="#F472B6" stroke="#9D174D" stroke-width="3"/></g><g transform="translate(${X(k)-30} 130)">${buddySVG(guideOf(run.U)).replace('class="mascot ','class="').replace('<svg','<svg width="60" height="70"')}</g><text x="380" y="318" text-anchor="middle" font-size="22" font-weight="700" fill="#5B21B6">${k} of ${N} facts</text>`;const cur=facts[k];s+=cur?`<text x="380" y="100" text-anchor="middle" font-size="88" font-weight="800" fill="#1E1B4B">${cur.label.replace('?','□')}${/\?/.test(cur.label)?'':' = ?'}</text>`:`<text x="380" y="100" text-anchor="middle" font-size="64" font-weight="800" fill="#16A34A">Finish! ★</text>`;svg.innerHTML=s};draw(0);
+  A.ask(`Fact race! Focus: the ${focus}s`,`${N} quick facts. Your tricky ones come up more. Just remember the answer and type it.`);
+  let t0=Date.now();const miss=facts.map(()=>0);
+  A.keypad(facts.map((f,i)=>({label:f.label,ans:f.ans,hint:()=>{miss[i]++;if(miss[i]===1)pmMark(f.cell[0],f.cell[1],false,9999);return miss[i]>=2?`It is <b>${f.ans}</b>. Type it in, and I will ask it again soon.`:f.nudge}})),
+   {onStep:k=>{const f=facts[k-1];if(!miss[k-1])pmMark(f.cell[0],f.cell[1],true,Date.now()-t0);t0=Date.now();draw(k);A.say(miss[k-1]?`✓ ${f.label.replace('?',f.ans)}${/\?/.test(f.label)?'':' = '+f.ans}. Say it once out loud!`:pick(['✓ Fast!','✓ Got it!','✓ Zoom!','✓ Yes!']),'happy')},
+    onDone:()=>{const f=facts[N-1];if(!miss[N-1])pmMark(f.cell[0],f.cell[1],true,Date.now()-t0);draw(N);const clean=miss.filter(x=>!x).length;A.good(`${clean} of ${N} on the first try! You crossed the finish line!`)}});
+  {const sl=A.controls.querySelector('.steps');if(sl)sl.style.display='none'}A.audit({kind:'power',facts});A.plan(()=>facts.map(f=>({key:f.ans})));A.wrong(()=>[{key:facts[0].ans+1}])}});
 
 const WPT={
  groups:d=>{const g=rnd(3,d<=2?6:9),k=rnd(2,d<=2?6:10),[box,item]=pick([['bags','apples'],['boxes','crayons'],['vases','flowers'],['packs','stickers'],['plates','cookies']]);return{t:`There are ${g} ${box} with ${k} ${item} in each. How many ${item} are there in all?`,eq:`${g} × ${k}`,ans:g*k,alt:[`${g} + ${k}`,`${g*k} ÷ ${g}`],g,k,pic:'groups'}},
