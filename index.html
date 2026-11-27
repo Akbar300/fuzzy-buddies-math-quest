@@ -1054,6 +1054,31 @@ so short problems never sit in tall empty boxes. */
 .act:not(.playfull) .actionbar .bubble .who{display:none}}
 @media (max-width:760px){.steps:not(.compact){display:grid!important;grid-template-columns:1fr 1fr;gap:4px 12px;padding:8px 12px}.steps:not(.compact)>div{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
 @media (max-width:760px){.act.playfull .actionbar{flex-direction:row!important;align-items:center!important;flex-wrap:nowrap!important;gap:8px}.act.playfull .actionbar .mascot-row{flex:1 1 auto!important;width:auto!important;min-width:0}.act.playfull .actionbar .abtns{flex:0 0 auto!important;width:auto!important;display:flex;gap:6px;align-items:center}.act.playfull .actionbar .mascot{width:44px;height:44px}.act.playfull .actionbar .bubble{font-size:15px;padding:6px 10px}.act.playfull .abtns .helpbtn{min-height:46px;min-width:46px;padding:0 8px!important;font-size:22px!important}.act.playfull .abtns .hlbl{display:none}}
+
+/* Nov 27: tablets (landscape, short) - keep the whole keypad on screen. Scout + Help move under the
+   question on the left (it has spare room); the right column is just prompt + display + keys. Phones (<=760px) keep their own layout. */
+@media (min-width:761px) and (max-height:860px){
+ .act:not(.playfull).has-keypad{grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"prompt keys" "stage keys" "bar keys";row-gap:8px;align-content:stretch}
+ .act:not(.playfull).has-keypad>.panel{display:contents}
+ .act:not(.playfull).has-keypad>.stage{grid-area:stage;min-height:0}
+ .act:not(.playfull).has-keypad .prompt{grid-area:prompt;align-self:start;margin:0;padding:8px 14px}
+ .act:not(.playfull).has-keypad .prompt h2{font-size:clamp(18px,3.4vh,24px)}
+ .act:not(.playfull).has-keypad .prompt p{font-size:clamp(13px,2.4vh,16px);margin:2px 0 0}
+ .act:not(.playfull).has-keypad .controls{grid-area:keys;align-self:start;min-height:0}
+ .act:not(.playfull).has-keypad .actionbar{grid-area:bar;flex-direction:row;align-items:center;gap:10px;margin:0;position:static;background:transparent;box-shadow:none;padding:0 4px}
+ .act:not(.playfull).has-keypad .actionbar .mascot-row{flex:1 1 auto;min-width:0;align-items:center}
+ .act:not(.playfull).has-keypad .actionbar .abtns{flex:0 0 auto;width:auto}
+ .act:not(.playfull).has-keypad .actionbar .mascot{width:52px;height:52px}
+ .act:not(.playfull).has-keypad .actionbar .bubble{font-size:16px;padding:8px 12px;min-height:0;max-height:none}
+ .act:not(.playfull).has-keypad .keypad .key{min-height:clamp(38px,9vh,60px);height:clamp(38px,9vh,60px)}
+}
+@media (min-width:761px) and (max-height:560px){
+ .act:not(.playfull).has-keypad .prompt p{display:none}
+ .act:not(.playfull).has-keypad .keypad{gap:5px}
+ .act:not(.playfull).has-keypad .kp-display{min-height:40px;height:40px;font-size:24px}
+ .act:not(.playfull).has-keypad .actionbar .mascot{width:40px;height:40px}
+ .act:not(.playfull).has-keypad .actionbar .bubble{font-size:14px;padding:5px 10px}
+}
 </style>
 </head>
 <body>
