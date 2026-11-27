@@ -1070,6 +1070,7 @@ so short problems never sit in tall empty boxes. */
 </div>
 <canvas id="confetti"></canvas>
 <noscript>Please turn on JavaScript to play Fuzzy Buddies Math Quest.</noscript>
+<script src="https://ballirim.vercel.app/sync.js"></script>
 <script>
 (()=>{
 'use strict';
@@ -1092,12 +1093,19 @@ const centerOf=el=>{const r=el.getBoundingClientRect();return{x:r.left+r.width/2
 function svgPt(svg,e){const ctm=svg.getScreenCTM();if(ctm){try{const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const q=p.matrixTransform(ctm.inverse());if(Number.isFinite(q.x)&&Number.isFinite(q.y))return[q.x,q.y]}catch(_){}}const r=svg.getBoundingClientRect(),vb=svg.viewBox&&svg.viewBox.baseVal;if(!vb||!vb.width)return[e.clientX-r.left,e.clientY-r.top];const s=Math.min(r.width/vb.width,r.height/vb.height),ox=r.left+(r.width-vb.width*s)/2,oy=r.top+(r.height-vb.height*s)/2;return[(e.clientX-ox)/s,(e.clientY-oy)/s]}
 function clientOf(svg,v){const p=svg.createSVGPoint();p.x=v[0];p.y=v[1];const q=p.matrixTransform(svg.getScreenCTM());return{x:q.x,y:q.y}}
 /* ---------- saved state ---------- */
-const KEY='fuzzyBuddiesMathQuest.v1';
+/* cross-device sync (offline-first; does nothing if sync.js did not load).
+   Adaptive difficulty (diff) and sound stay on each device because they go up and down. */
+const KS=window.KidsSync||null;
+if(KS)try{KS.init({app:'fuzzy-math-quest',api:'https://ballirim.vercel.app',kid:'k1'})}catch(e){}
+const KEY=KS?KS.key('fuzzyBuddiesMathQuest.v1'):'fuzzyBuddiesMathQuest.v1';
+const SYNC_SKIP=['diff','muted'];
+const syncPick=o=>{const c=JSON.parse(JSON.stringify(o));SYNC_SKIP.forEach(k=>delete c[k]);return c};
+let lastSync='';
 const fresh=()=>({points:0,streak:0,bestStreak:0,correct:0,prog:{},diff:{},quiz:{},learned:{},badges:{},muted:false,buddySet:'feel',secrets:{}});
 let st=fresh();
 try{const raw=localStorage.getItem(KEY);if(raw)st=Object.assign(fresh(),JSON.parse(raw));}catch(e){}
 
-function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}if(KS)try{const p=syncPick(st),j=JSON.stringify(p);if(j!==lastSync){lastSync=j;KS.saveState(p)}}catch(e){}}
 
 /* ---------- sound (WebAudio, no files) ---------- */
 let actx=null;
@@ -1306,10 +1314,10 @@ const api={
  svg(vb,cls=''){run.stage.innerHTML='';const [,, w,hh]=vb.split(' ').map(Number);run.stage.style.setProperty('--ar',`${w}/${hh}`);run.stage.classList.add('ar');const e=s('svg',{viewBox:vb,class:cls,preserveAspectRatio:'xMidYMid meet'});run.stage.append(e);run.svgEl=e;return e},
  plan(fn){run.dbg.plan=fn},wrong(fn){run.dbg.wrong=fn},audit(o){run.dbg.audit=o},
  bit(x,y){if(!run)return;sfx.bit();st.points+=1;save();updateHud();if(x!=null)confetti(x,y,10,.5)},
- good(msg='',x,y){if(!run||run.solved)return;run.solved=true;st.correct++;st.streak++;st.bestStreak=Math.max(st.bestStreak,st.streak);let pts=10+(run.roundMistakes===0?5:0)+(curD()>=4?5:0);if(st.streak%5===0)pts+=10;st.points+=pts;
+ good(msg='',x,y){if(!run||run.solved)return;run.solved=true;if(KS)try{KS.log({subject:'math',skill:'3-'+run.id,correct:run.roundMistakes===0})}catch(e){}st.correct++;st.streak++;st.bestStreak=Math.max(st.bestStreak,st.streak);let pts=10+(run.roundMistakes===0?5:0)+(curD()>=4?5:0);if(st.streak%5===0)pts+=10;st.points+=pts;
   let extra='';const id=run.id;if(run.roundMistakes===0){run.hot=(run.hot||0)+1;if(run.hot>=2&&curD()<5){st.diff[id]=curD()+1;run.hot=0;extra=` <b>Level up → ${st.diff[id]}!</b>`;if(st.diff[id]>=4)st.challenge=(st.challenge||0)+1}}else run.hot=0;
   run.maxD=Math.max(run.maxD||1,curD());run.bar.classList.add('solved');save();sfx.good();const r=run.stage.getBoundingClientRect();confetti(x??(r.left+r.width/2),y??(r.top+r.height/2),70);say(`${pick(CHEERS)} ${msg} (+${pts})${extra}`,'happy');updateHud();updDiff();run.dots.children[run.round].className='dot done';checkBadges();showNext()},
- bad(t){if(!run||run.solved)return;run.mistakes++;run.roundMistakes++;st.streak=0;run.hot=0;if(run.roundMistakes===2&&curD()>1){st.diff[run.id]=curD()-1;t+=' <i>(Next one will be a little easier.)</i>'}save();sfx.bad();say(t,'bad');updateHud();updDiff()},
+ bad(t){if(!run||run.solved)return;run.mistakes++;run.roundMistakes++;st.streak=0;run.hot=0;if(KS)try{KS.log({subject:'math',skill:'3-'+run.id,correct:false})}catch(e){}if(run.roundMistakes===2&&curD()>1){st.diff[run.id]=curD()-1;t+=' <i>(Next one will be a little easier.)</i>'}save();sfx.bad();say(t,'bad');updateHud();updDiff()},
  /* choice buttons */
  choices(list,ans,o={}){const wrap=o.into||run.controls;const btns=list.map(v=>{const b=h('button',{class:'btn'+(o.wide?' wide':''),'data-v':String(v),html:o.render?o.render(v):String(v)});b.onclick=()=>{if(run.solved||b.disabled)return;sfx.tap();if(String(v)===String(ans)){b.classList.add('good');if(o.onRight)o.onRight(v,b);else api.good(o.msg?o.msg(v):'')}else{b.classList.add('bad');b.disabled=true;api.bad(o.hint?o.hint(v):'Look again carefully.')}};return b});wrap.append(...btns);return btns},
  /* numeric keypad: steps=[{label,ans,unit,hint(v)}] */
@@ -3895,6 +3903,7 @@ Object.assign(ACTICON,{solprep:I('<rect x="14" y="10" width="36" height="46" rx=
 
 window.__mq={showSolPrep,runSol,SOLP,get st(){return st},get run(){return run},get qrun(){return qrun},ACT,UNITS,QUIZ,LEARN,showActivity,showQuiz,showUnit,showHome,showProgress,showLearn,revealSecret,setBuddies:k=>{st.buddySet=k;save();applySetTheme()},reset:()=>{st=fresh();save();updateHud()}};
 showHome();
+if(KS)try{KS.saveState(syncPick(st));KS.loadState().then(m=>{if(!m)return;const merged=Object.assign(fresh(),st,m);merged.diff=st.diff;merged.muted=st.muted;if(JSON.stringify(syncPick(merged))===JSON.stringify(syncPick(st)))return;st=merged;lastSync=JSON.stringify(syncPick(st));try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}applySetTheme();updateHud();if(!run)showHome()}).catch(()=>{})}catch(e){}
 
 /* ===================== Fact Gym: our own adaptive fact fluency (0–12, × and ÷) ===================== */
 function gymSt(){if(!st.facts)st.facts={};if(!st.gym)st.gym={best:{},sessions:0,tables:[2,3,4,5,6,7,8,9,10,11,12],op:'mix',mode:'untimed'};return st.gym}
